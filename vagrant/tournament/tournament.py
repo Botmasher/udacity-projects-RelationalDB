@@ -13,15 +13,44 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
+    
+    # renive all matches from table
+    cur.execute ('DELETE FROM matches WHERE id > -1')
 
+    # store changes and close session
+    cxn.commit()
+    cxn.close()
 
 def deletePlayers():
     """Remove all the player records from the database."""
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
 
+    # remove all players from table
+    cur.execute ('DELETE FROM players WHERE id > -1')
+    
+    # store changes and close session
+    cxn.commit()
+    cxn.close()  
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
 
+    # count the number of rows in players relation
+    cur.execute('SELECT COUNT(id) FROM players;')
+    # since count returns tuple, store the first integer in tuple
+    (num_players,) = cur.fetchone()
+    
+    # close session and return
+    cxn.close()
+    return num_players
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
@@ -32,7 +61,18 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
+    
+    # add player to players relation
+    # note the tuple syntax for parametrized strings
+    # and the expectation that the name is enclosed in double quotes
+    cur.execute('INSERT INTO players (name) VALUES (%s)', (name,))
 
+    # close session
+    cxn.commit()
+    cxn.close()
 
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
@@ -47,7 +87,7 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-
+    
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
