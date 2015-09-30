@@ -11,7 +11,9 @@
 DROP TABLE IF EXISTS players CASCADE;
 CREATE TABLE players (
 	id			serial		primary key,
-	name		text
+	name		text,
+	matches		integer,
+	wins		integer
 );
 
 DROP TABLE IF EXISTS matches CASCADE; 
@@ -21,10 +23,9 @@ CREATE TABLE matches (
 	player2		integer		references		players(id)
 );
 
-DROP TABLE IF EXISTS scores;
+DROP TABLE IF EXISTS scores CASCADE;
 CREATE TABLE scores (
 	match		integer		references		matches(id),
-	winscore	integer,
-	losescore	integer,
-	winner		integer		references		players(id)
+	winner		integer		references		players(id),
+	loser 		integer		references		players(id)
 );

@@ -18,6 +18,7 @@ def deleteMatches():
     cur = cxn.cursor()
     
     # renive all matches from table
+    cur.execute ('DELETE FROM scores')
     cur.execute ('DELETE FROM matches WHERE id > -1')
 
     # store changes and close session
@@ -68,7 +69,7 @@ def registerPlayer(name):
     # add player to players relation
     # note the tuple syntax for parametrized strings
     # and the expectation that the name is enclosed in double quotes
-    cur.execute('INSERT INTO players (name) VALUES (%s)', (name,))
+    cur.execute('INSERT INTO players (name, matches, wins) VALUES (%s,%s,%s)', (name,0,0,))
 
     # close session
     cxn.commit()
@@ -87,7 +88,19 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
+
+    # query for per-player matches played and number of wins
+    cur.execute('SELECT id, name, wins, matches FROM players ORDER BY wins DESC;')
+
+    # store list of player standings
+    standings = cur.fetchall()
+
+    # close session and return values
+    cxn.close()
+    return standings
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
@@ -96,7 +109,20 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
+
+    # add winner and loser ids for match
+    cur.execute('INSERT INTO scores (winner, loser) VALUES (%s, %s)' , (winner, loser,))
+    # increment the winner's wins and matches played
+    cur.execute('UPDATE players SET matches = matches + 1, wins = wins + 1 WHERE id = %s', (winner,))
+    # increment the loser's matches played
+    cur.execute('UPDATE players SET matches = matches + 1 WHERE id = %s', (loser,))
+    
+    # update database and close session
+    cxn.commit()
+    cxn.close()
  
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
@@ -113,5 +139,27 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    # open session
+    cxn = connect()
+    cur = cxn.cursor()
 
+    # get players sorted by score
+    cur.execute('SELECT id, name FROM players ORDER BY wins DESC')
+    result = cur.fetchall()
 
+    # empty list for organizing upcoming round
+    this_round = []
+
+    # loop through query results and store evenly matched pairs
+    i = 0
+    while i < len(result):
+        # pair each player with player on next row
+        this_pair = (result[i][0], result[i][1], result[i+1][0], result[i+1][1])
+        this_round.append(this_pair)
+        # skip rows for next pairing
+        i += 2
+    
+    # update database and close session
+    cxn.commit()
+    cxn.close()
+    return (this_round)
