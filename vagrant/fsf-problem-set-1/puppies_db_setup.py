@@ -33,15 +33,22 @@ class Puppy (Base):
 	__tablename__ = 'puppy'
 	# MAPPER variables for columns in table
 	id = Column(Integer, primary_key = True)
+	shelter = relationship(Shelter)
+	# store relationship with  key table
+	shelter_id = Column(Integer, ForeignKey('shelter.id'))
+	# store one-to-one relationship with child table
+	profile = relationship('Profile', uselist=False, backref='puppy')
+
+class Profile (Base):
+	__tablename__ = 'profile'
+	id = Column(Integer, primary_key = True)
 	name = Column(String(250), nullable = False)
 	breed = Column(String(80))
 	gender = Column(String(80), nullable = False)
+	weight = Column(Integer)
 	dateOfBirth = Column(Date)
 	picture = Column(String)
-	shelter_id = Column(Integer, ForeignKey('shelter.id'))
-	# store relationship with foreign key table
-	shelter = relationship(Shelter)
-	weight = Column(Integer)
+	puppy_id = Column(Integer, ForeignKey('puppy.id'))
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
