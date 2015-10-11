@@ -5,14 +5,18 @@ import sys
 from sqlalchemy import Table, Column, ForeignKey, Integer, String, Date, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 
-# CONFIG create foreign key relationships
-from sqlalchemy.orm import relationship
+# add sql update methods
+from sqlalchemy import update
+
+# CONFIG create foreign key relationships and allow opening sessions
+from sqlalchemy.orm import relationship, sessionmaker
 
 # CONFIG use in creation code at end of file
 from sqlalchemy import create_engine
 
 # CONFIG setup base class
 Base = declarative_base()
+
 
 # CLASS represent restaurants table, extending base class
 class Shelter (Base):
@@ -25,6 +29,8 @@ class Shelter (Base):
 	zipCode = Column(Integer)
 	state = Column(String(250), nullable = False)
 	website = Column(String(250), nullable = False)
+	occupancy = Column(Integer)
+	capacity = Column(Integer)
 	id = Column(Integer, primary_key = True)
 
 # ASSOCIATION table for many:many between puppies and adopters
@@ -69,3 +75,28 @@ engine = create_engine('sqlite:///puppies.db')
 
 # go into db, add classes created as new tables in db #
 Base.metadata.create_all(engine)
+
+# CRUD session
+Base.metadata.bind = engine
+DBSession = sessionmaker (bind = engine)	# possibility to CRUD
+session = DBSession()	# open instance of the DBSession
+
+
+# get and set shelter current and max occupancy
+def get_occupancy (self, id):
+	result = session.query (Shelter).filter(Shelter.id==id).all()
+	return result
+def set_occupancy (self, id, occupancy):
+	result = session.execute ( update(Shelter).where(Shelter.id==id).\
+		values (occupancy=occupancy) )
+	return result
+def set_capacity (self, id, capacity):
+	result = session.execute ( update(Shelter).where(Shelter.id==id).\
+		values (capacity=capacity) )
+	return result
+
+# add to shelter class
+Shelter.get_occupancy = get_occupancy
+Shelter.set_occupancy = set_occupancy
+Shelter.set_capacity = set_capacity
+ 
