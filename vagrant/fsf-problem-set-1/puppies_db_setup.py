@@ -83,20 +83,19 @@ session = DBSession()	# open instance of the DBSession
 
 
 # get and set shelter current and max occupancy
-def get_occupancy (self, id):
-	result = session.query (Shelter).filter(Shelter.id==id).all()
+def get_occupancy (shelter_id):
+	result = session.query (Shelter).filter(Shelter.id==shelter_id).all()
 	return result
-def set_occupancy (self, id, occupancy):
-	result = session.execute ( update(Shelter).where(Shelter.id==id).\
-		values (occupancy=occupancy) )
+def set_occupancy (shelter_id, occupancy):
+	result = session.execute ( update(Shelter).where(Shelter.id==shelter_id)\
+		.values (occupancy=occupancy) )
 	return result
-def set_capacity (self, id, capacity):
-	result = session.execute ( update(Shelter).where(Shelter.id==id).\
-		values (capacity=capacity) )
+def set_capacity (shelter_id, capacity):
+	result = session.execute ( update(Shelter).where(Shelter.id==shelter_id)\
+		.values (capacity=capacity) )
 	return result
 
-# add to shelter class
-Shelter.get_occupancy = get_occupancy
-Shelter.set_occupancy = set_occupancy
-Shelter.set_capacity = set_capacity
- 
+# test adding occupancy and capacity to a shelter
+set_occupancy(1, 47)
+set_capacity(1, 50)
+print(str(get_occupancy(1)[0].occupancy)+'/'+str(get_occupancy(1)[0].capacity))

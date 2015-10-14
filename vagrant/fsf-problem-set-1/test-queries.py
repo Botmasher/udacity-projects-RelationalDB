@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 #from sqlalchemy import select
 
 # our database, as described in the section above
-from puppies_db_setup import Base, Puppy, Shelter, Profile
+from puppies_db_setup import *
 engine = create_engine('sqlite:///puppies.db')
 Base.metadata.bind = engine
 
@@ -35,6 +35,4 @@ for p in puppies:
 puppies = session.query(Puppy).order_by('puppy.shelter_id').group_by('puppy.name').all()
 print ('\n\nIDENTIFY KILL LOCATIONS - CURRENT HOLDING CELLS\n')
 for p in puppies:
-	p.shelter.set_occupancy(p.shelter_id, 2)
-	p.shelter.set_capacity(p.shelter_id, 100)
 	print ('Hi, just one more time. I am a homeless puppy. My name is %s. Right now I live at %s. %s / %s'%(p.name,p.shelter.name,p.shelter.occupancy,p.shelter.capacity))
