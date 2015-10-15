@@ -95,7 +95,39 @@ def set_capacity (shelter_id, capacity):
 		.values (capacity=capacity) )
 	return result
 
+# check a puppy into a shelter
+def check_in (puppy_id, shelter_id):
+	# query for requested shelter table
+	row = session.query(Shelter).filter(Shelter.id==shelter_id).one()
+	# if requested shelter is full, iterate through to find an open one
+	if row.occupancy >= row.capacity:
+		print ("Shelter full. Checking for another shelter...\n")
+		table = session.query(Shelter).all()
+		for r in table:
+			# if newly chosen shelter is open, check puppy in
+			if r.occupancy < r.capacity:
+				shelter_id = r.id
+				result = session.execute ( update(Puppy).where(Puppy.id == puppy_id).values (shelter_id=shelter_id) )
+				print ("Found a new shelter! Checking puppy into %s."%(r.name))
+				return result
+			# keep checking for open shelter
+			else:
+				pass
+		# if iteration returned no shelter, all shelters are full
+		print ("All shelters are full. Please open a new one.")
+		return None
+	# requested shelter isn't full, so check puppy in
+	else:
+		result = session.execute ( update(Puppy).where(Puppy.id == puppy_id).values (shelter_id=shelter_id) )
+		print ("As requested, checking puppy into %s."%(row.name))
+		return result
+
 # test adding occupancy and capacity to a shelter
-set_occupancy(1, 47)
+set_occupancy(1, 50)
 set_capacity(1, 50)
+set_occupancy(2, 32)
+set_capacity(2, 40)
 print(str(get_occupancy(1)[0].occupancy)+'/'+str(get_occupancy(1)[0].capacity))
+
+# test checking in puppy
+check_in(1,1)
