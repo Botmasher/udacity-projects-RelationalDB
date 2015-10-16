@@ -143,34 +143,19 @@ def curate_shelter_capacity (reset_cap=False):
 	return None
 
 
-# write a load-balancing algorithm that evenly distributes puppies throughout all shelters
-
-# query for the number of puppies
-# query for the sum of occupancies
-# query for the sum of capacities
-# ratio the two
-
-# redistribute puppies evenly
-	# for each shelter, while shelter ratio is less than that overall ratio,
-	# put puppies in it
-	#	- use manual counter starts at 0/Shelter.capacity
-	#	- go down Puppy.id and place puppies, increase counter
-	#	- prompt to open more shelters if reach cap
-
-# if we end up with extra puppies (number of puppies still counting thru)
-	# - figure out how many left
-	# - divide between number of shelters if still under cap
-	# - prompt to open more once reach cap
-
-
 def distribute_puppies ():
+	"""Evenly balance the number of puppies spread throughout the shelter system.
+
+	:param None: No inputs.
+	:returns: None
+	"""
 	# calculate totals to determine overall balance 
 	total_puppies_to_place = session.query(func.count(Puppy.id)).first()[0]
 	total_occupancy = float( session.query(func.sum(Shelter.occupancy)).first()[0] )
 	total_capacity = float( session.query(func.sum(Shelter.capacity)).first()[0] )
 	total_ratio = total_occupancy/total_capacity
  
- 	# balance individual shelters to overall balance
+ 	# balance individual shelters to match the overall ratio
 	for shelter in session.query(Shelter.id, Shelter.capacity).all():
 		# count values for determining when shelter is balanced
 		shelter_counter = 0
@@ -182,8 +167,7 @@ def distribute_puppies ():
 			total_puppies_to_place -= 1
 			shelter_counter += 1
 
-
-	# balance any remaining puppies
+	# balance any remaining puppies (noise from above balancing to total_ratio)
 	this_shelter = 0
 	while total_puppies_to_place > 0:
 		# if all shelters are full, prompt user to open a new shelter
@@ -202,7 +186,6 @@ def distribute_puppies ():
 				this_shelter = 0
 			else:
 				this_shelter += 1
-
 
 	# EXTRA challenge (by Josh): move puppies as little as possible!
 	return None
