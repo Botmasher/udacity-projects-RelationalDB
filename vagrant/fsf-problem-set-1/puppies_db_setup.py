@@ -8,6 +8,9 @@ from sqlalchemy.ext.declarative import declarative_base
 # add sql update methods
 from sqlalchemy import update
 
+# functions (count, etc.)
+from sqlalchemy import func
+
 # CONFIG create foreign key relationships and allow opening sessions
 from sqlalchemy.orm import relationship, sessionmaker
 
@@ -122,6 +125,49 @@ def check_in (puppy_id, shelter_id):
 		print ("As requested, checking puppy into %s."%(row.name))
 		return result
 
+
+def curate_shelter_capacity (reset_cap=False):
+	"""Update the occupancy and capacity of each shelter to reflect current totals.
+
+	:param reset_cap: Boolean option to reset the capacity of each shelter
+	:returns: None
+	"""
+	# reset shelter capacity if requested
+	this_cap = Shelter.capacity if not reset_cap else 30
+	
+	# sum the puppies in each shelter
+	shelters = session.query(Puppy.shelter_id, func.count(Puppy.id)).group_by(Puppy.shelter_id).all()
+	# update each shelter with its current number of puppies
+	for shelter in shelters:
+		session.execute(update(Shelter).where(Shelter.id == shelter[0]).values(Shelter.occupancy = shelter[1], Shelter.capacity = this_cap))
+	return None
+
+
+# write a load-balancing algorithm that evenly distributes puppies throughout all shelters
+
+# query for the number of puppies
+# query for the sum of occupancies
+# query for the sum of capacities
+# ratio the two
+
+# redistribute puppies evenly
+	# for each shelter, while shelter ratio is less than that overall ratio,
+	# put puppies in it
+	#	- use manual counter starts at 0/Shelter.capacity
+	#	- go down Puppy.id and place puppies, increase counter
+	#	- prompt to open more shelters if reach cap
+
+# if we end up with extra puppies (number of puppies still counting thru)
+	# - figure out how many left
+	# - divide between number of shelters if still under cap
+	# - prompt to open more once reach cap
+
+# EXTRA : move puppies as little as possible
+def distribute_puppies ():
+		
+	return None
+
+
 # test adding occupancy and capacity to a shelter
 set_occupancy(1, 50)
 set_capacity(1, 50)
@@ -131,3 +177,5 @@ print(str(get_occupancy(1)[0].occupancy)+'/'+str(get_occupancy(1)[0].capacity))
 
 # test checking in puppy
 check_in(1,1)
+
+curate_shelter_capacity(True)
