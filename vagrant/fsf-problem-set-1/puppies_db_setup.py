@@ -139,7 +139,7 @@ def curate_shelter_capacity (reset_cap=False):
 	shelters = session.query(Puppy.shelter_id, func.count(Puppy.id)).group_by(Puppy.shelter_id).all()
 	# update each shelter with its current number of puppies
 	for shelter in shelters:
-		session.execute(update(Shelter).where(Shelter.id == shelter[0]).values(Shelter.occupancy = shelter[1], Shelter.capacity = this_cap))
+		session.execute ( update(Shelter).where(Shelter.id == shelter[0]).values (occupancy=shelter[1], capacity=this_cap) )
 	return None
 
 
@@ -162,20 +162,77 @@ def curate_shelter_capacity (reset_cap=False):
 	# - divide between number of shelters if still under cap
 	# - prompt to open more once reach cap
 
-# EXTRA : move puppies as little as possible
+
 def distribute_puppies ():
-		
+	# calculate totals to determine overall balance 
+	total_puppies_to_place = session.query(func.count(Puppy.id)).first()[0]
+	total_occupancy = float( session.query(func.sum(Shelter.occupancy)).first()[0] )
+	total_capacity = float( session.query(func.sum(Shelter.capacity)).first()[0] )
+	total_ratio = total_occupancy/total_capacity
+ 
+ 	# balance individual shelters to overall balance
+	for shelter in session.query(Shelter.id, Shelter.capacity).all():
+		# count values for determining when shelter is balanced
+		shelter_counter = 0
+		shelter_balance = total_ratio * shelter[1]
+		while shelter_counter < shelter_balance:
+			# count down puppies and add them to shelter, highest to lowest id
+			session.execute(update(Puppy).where(Puppy.id == total_puppies_to_place).values(shelter_id=shelter[0]))
+			# increment/decrement balance values
+			total_puppies_to_place -= 1
+			shelter_counter += 1
+
+
+	# balance any remaining puppies
+	this_shelter = 0
+	while total_puppies_to_place > 0:
+		# if all shelters are full, prompt user to open a new shelter
+		if session.query(func.sum(Shelter.occupancy)).first()[0] >= session.query(func.sum(Shelter.capacity)).first()[0]:
+			print ('We placed as many puppies as possible, but there aren\'t enough shelters! Please consider opening a new one!')
+			return None
+		else:
+			# place this puppy
+			session.execute(update(Puppy).where(Puppy.id==total_puppies_to_place).values(shelter_id=this_shelter))
+			
+			# countdown puppy id for next pass through loop
+			total_puppies_to_place -= 1
+			
+			# determine shelter id for next pass through loop
+			if  this_shelter >= session.query(func.count(Shelter.id)).first()[0]:
+				this_shelter = 0
+			else:
+				this_shelter += 1
+
+
+	# EXTRA challenge (by Josh): move puppies as little as possible!
 	return None
 
 
 # test adding occupancy and capacity to a shelter
-set_occupancy(1, 50)
-set_capacity(1, 50)
-set_occupancy(2, 32)
-set_capacity(2, 40)
-print(str(get_occupancy(1)[0].occupancy)+'/'+str(get_occupancy(1)[0].capacity))
+#print(str(get_occupancy(1).occupancy)+'/'+str(get_occupancy(1).capacity))
 
 # test checking in puppy
-check_in(1,1)
+#check_in(1,1)
 
-curate_shelter_capacity(True)
+# test for shelter counts
+for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
+	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
+
+# run occupancy functions
+curate_shelter_capacity()
+set_capacity(1,32)
+set_capacity(3,26)
+set_capacity(4,40)
+distribute_puppies()
+curate_shelter_capacity()
+
+# save changes
+session.commit()
+
+# test for shelter counts
+for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
+	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
+
+# test for puppies in shelters
+#for x in session.query (Puppy.name, Shelter.name, Shelter.occupancy, Shelter.capacity).filter(Puppy.shelter_id==Shelter.id).all():
+#	print (str(x[0]) + ': ' + str(x[1]) + ' -- ' + str(x[2]) + ' / '+ str(x[3]))
