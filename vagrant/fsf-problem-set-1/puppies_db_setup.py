@@ -191,6 +191,8 @@ def distribute_puppies ():
 	return None
 
 
+### TESTS AND CALLS BELOW THIS POINT ###
+
 # test adding occupancy and capacity to a shelter
 #print(str(get_occupancy(1).occupancy)+'/'+str(get_occupancy(1).capacity))
 
