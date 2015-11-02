@@ -3,6 +3,9 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 # decipher messages sent by server
 import cgi
 
+# pull out URL parameters
+#from urlparse import urlparse, parse_qs
+
 # sql and orm
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
@@ -12,7 +15,7 @@ from ormtest import Restaurant,MenuItem
 engine = create_engine('sqlite:///restaurantmenu.db')
 
 # start a session for CRUD actions
-Base.metadata.bind = engine
+#Base.metadata.bind = engine 	# returning Base not defined
 DBSession = sessionmaker (bind = engine)
 session = DBSession()
 
@@ -44,27 +47,42 @@ class webserverHandler (BaseHTTPRequestHandler):
 				output += '<html><body>'
 				for r in restaurants:
 					output += '<h2> %s </h2>'%r.name
-					output += '<form method="POST" enctype="multipart/form-data" action="/restaurants"><input name="new_restaurant" type="text"><input type="submit" value="Submit"></form>'
+					output += '<a href = "/restaurants/%s/edit">edit</a> <a href = "/restaurants/delete">delete</a>'%r.id
 				output += '</body></html>'
 				# send an output stream message back to the client
 				self.wfile.write(output)
 				return
 
-			# do a separate branch for a different URL
-			elif self.path.endswith('/hola'):
+			elif self.path.endswith('/restaurants/new'):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
 				self.end_headers()
 
 				output = ''
-				output += '<html><body>&#161;Hola!'
-				output += '<h2> Leave a message at the beep! </h2>'
+				output += '<html><body>'
+				output += '<h2> Add a new restaurant: </h2>'
 
-				output += '<form method = \'POST\' enctype=\'multipart/form-data\' action=\'/hello\'><h2>beeeeeeeep . . . ...</h2><input name = \'message\' type=\'text\'><input type=\'submit\' value=\'Submit\'></form>'
+				output += '<form method = \'POST\' enctype=\'multipart/form-data\' action=\'/restaurants\'><input name = \'add_new\' type=\'text\'><input type=\'submit\' value=\'Submit\'></form>'
 				output += '</body></html>'
 				self.wfile.write(output)
 				return
-		
+			
+			elif self.path.endswith('/edit'):
+				self.send_response(200)
+				self.send_header('Content-type', 'text/html')
+				self.end_headers()
+
+				restaurant_id = self.path.split('/edit')[0].split('restaurants/')[1]
+				this_r = session.query(Restaurant).filter(Restaurant.id==restaurant_id)[0]
+				output = ''
+				output += '<html><body>'
+				output += '<h2>  Modify this restaurant: </h2>'
+
+				output += '<form method="POST" enctype="multipart/form-data" action=""><input name="modify" type="text" value="'+this_r.name+'"><input type="submit" value="Submit"></form>'
+				output += '</body></html>'
+				self.wfile.write(output)
+				return
+
 		# what to do if file not found
 		except:
 			self.send_error(404, 'File not found %s'%self.path)
@@ -80,19 +98,58 @@ class webserverHandler (BaseHTTPRequestHandler):
 			# if the content is form data, collect all its fields with parse_multipart
 			if ctype == 'multipart/form-data':
 				fields = cgi.parse_multipart(self.rfile, pdict)
-				# store specific fields into array (here the ones named 'message')
-				messagecontent = fields.get('message')
+				
+				#added_restaurant = fields.get('add_new')[0]
+				# store specific fields in array (using this_name from <input name="this_name">)
+				if (fields.get('add_new') != None):
+					added_restaurant = fields.get('add_new')[0]
 
-			# now tell client what to do with info received
-			output = ''
-			output += '<html><body>'
-			output += '<h2> Leave a message at the beep! </h2>'
-			output += '<h1>%s</h1>'%messagecontent[0]
+					# now tell client what to do with info received
+			
+					# add restaurant to database
+					new_restaurant = Restaurant (name=added_restaurant)
+					session.add (new_restaurant)
+					session.commit ()
+					
+					# format a page with user options
+					output = ''
+					output += '<html><body>'
+					output += '<h2> Finished adding restaurant... </h2>'
+					output += '<h1>%s</h1>'%added_restaurant
+					#output += '<h1>%s</h1>'%mod_restaurant
+					output += '<a href = "./new">Add another</a> <a href = "/restaurants">Home</a>'
+					output += '</body></html>'
+					self.wfile.write(output)
+					return
 
-			output += '<form method = \'POST\' enctype=\'multipart/form-data\' action=\'/hello\'><h2>beeeeeeeep . . . ...</h2><input name = \'message\' type=\'text\'><input type=\'submit\' value=\'Submit\'></form>'
-			output += '</body></html>'
-			self.wfile.write(output)
-			return
+				elif (fields.get('modify') != None):
+					mod_restaurant = fields.get('modify')[0]
+			
+					# modify restaurant in database
+					#updated_restaurant = Restaurantupdate(Restaurant).where(Restaurant.id==5).values(name=mod_restaurant)
+					#session.save (updated_restaurant)
+					#session.commit ()
+					
+					# format a page with user options
+					output = ''
+					output += '<html><body>'
+					output += '<h2> Finished modifying restaurant... </h2>'
+					output += '<h1>%s</h1>'%mod_restaurant
+					output += '<a href = "/restaurants">Home</a>'
+					output += '</body></html>'
+					self.wfile.write(output)
+					return
+
+			#elif self.path.endswith('/delete'):
+
+			#	output = '<html><body>'
+
+			#	for i in parse_qs(urlparse(self.path).query):
+			#		output += i
+
+			#	output += '</body></html>'
+			#	self.wfile.write(output)
+			#	return
 
 		except:
 			pass
