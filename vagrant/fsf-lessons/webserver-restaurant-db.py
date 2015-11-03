@@ -35,7 +35,9 @@ class webserverHandler (BaseHTTPRequestHandler):
 	# do_GET request handles all GET requests the server receives
 	def do_GET(self):
 		try:
-			# check path (url sent by server as string)
+			# check for main /restaurants path
+			# 	- list all entries in db
+			# 	- link to edit and delete leading to post requests for each entry
 			if self.path.endswith('/restaurants'):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
@@ -47,13 +49,14 @@ class webserverHandler (BaseHTTPRequestHandler):
 				output += '<html><body>'
 				for r in restaurants:
 					output += '<h2> %s </h2>'%r.name
-					output += '<a href = "/restaurants/%s/edit">edit</a> <a href = "/restaurants/delete">delete</a>'%r.id
+					output += '<a href = "/restaurants/%s/edit">edit</a> <a href = "/restaurants/%s/delete">delete</a>'%(r.id,r.id)
 				output += '</body></html>'
 				# send an output stream message back to the client
 				self.wfile.write(output)
 				return
 
-			elif self.path.endswith('/restaurants/new'):
+			# handle create restaurant page when user visits /new
+			elif self.path.endswith('/new'):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
 				self.end_headers()
@@ -61,12 +64,12 @@ class webserverHandler (BaseHTTPRequestHandler):
 				output = ''
 				output += '<html><body>'
 				output += '<h2> Add a new restaurant: </h2>'
-
 				output += '<form method = \'POST\' enctype=\'multipart/form-data\' action=\'/restaurants\'><input name = \'add_new\' type=\'text\'><input type=\'submit\' value=\'Submit\'></form>'
 				output += '</body></html>'
 				self.wfile.write(output)
 				return
 			
+			# handle edit - post to change name in db
 			elif self.path.endswith('/edit'):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
@@ -77,8 +80,24 @@ class webserverHandler (BaseHTTPRequestHandler):
 				output = ''
 				output += '<html><body>'
 				output += '<h2>  Modify this restaurant: </h2>'
+				output += '<form method="POST" enctype="multipart/form-data" action=""><input name="mod" type="text" value="'+this_r.name+'"><input type="submit" value="Submit"></form>'
+				output += '</body></html>'
+				self.wfile.write(output)
+				return
 
-				output += '<form method="POST" enctype="multipart/form-data" action=""><input name="modify" type="text" value="'+this_r.name+'"><input type="submit" value="Submit"></form>'
+			# handle delete path - post to delete id from db
+			elif self.path.endswith('/delete'):
+				self.send_response(200)
+				self.send_header('Content-type', 'text/html')
+				self.end_headers()
+
+				restaurant_id = self.path.split('/delete')[0].split('restaurants/')[1]
+				this_r = session.query(Restaurant).filter(Restaurant.id==restaurant_id)[0]
+				output = ''
+				output += '<html><body>'
+				output += '<h2 style="color:red;">  Are you sure you want to delete %s? </h2>'%this_r.name
+				output += '<p>This action cannot be undone!</p>'
+				output += '<form method="POST" enctype="multipart/form-data" action=""><input name="delete" type="submit" value="Submit"></form>'
 				output += '</body></html>'
 				self.wfile.write(output)
 				return
@@ -99,7 +118,6 @@ class webserverHandler (BaseHTTPRequestHandler):
 			if ctype == 'multipart/form-data':
 				fields = cgi.parse_multipart(self.rfile, pdict)
 				
-				#added_restaurant = fields.get('add_new')[0]
 				# store specific fields in array (using this_name from <input name="this_name">)
 				if (fields.get('add_new') != None):
 					added_restaurant = fields.get('add_new')[0]
@@ -116,21 +134,26 @@ class webserverHandler (BaseHTTPRequestHandler):
 					output += '<html><body>'
 					output += '<h2> Finished adding restaurant... </h2>'
 					output += '<h1>%s</h1>'%added_restaurant
-					#output += '<h1>%s</h1>'%mod_restaurant
 					output += '<a href = "./new">Add another</a> <a href = "/restaurants">Home</a>'
 					output += '</body></html>'
 					self.wfile.write(output)
 					return
 
-				elif (fields.get('modify') != None):
-					mod_restaurant = fields.get('modify')[0]
-			
-					# modify restaurant in database
-					#updated_restaurant = Restaurantupdate(Restaurant).where(Restaurant.id==5).values(name=mod_restaurant)
-					#session.save (updated_restaurant)
-					#session.commit ()
+				# edit restaurant at id passed through edit page path
+				elif (fields.get('mod') != None):
+					# get the user submitted new restaurant name
+					mod_restaurant = fields.get('mod')[0]
 					
-					# format a page with user options
+					# get id from path
+					restaurant_id = self.path.split('/edit')[0].split('restaurants/')[1]
+
+					# update db restaurant at that id to have submitted name
+					updated_r = session.query(Restaurant).filter(Restaurant.id==restaurant_id).one()
+					updated_r.name = mod_restaurant
+					session.add(updated_r)
+					session.commit ()
+					
+					# format a page with user options to return to main list
 					output = ''
 					output += '<html><body>'
 					output += '<h2> Finished modifying restaurant... </h2>'
@@ -140,16 +163,20 @@ class webserverHandler (BaseHTTPRequestHandler):
 					self.wfile.write(output)
 					return
 
-			#elif self.path.endswith('/delete'):
+				# delete restaurant at id passed through delete confirmation page path
+				elif (fields.get('delete') != None):
+					restaurant_id = self.path.split('/delete')[0].split('restaurants/')[1]
+					this_r = session.query(Restaurant).filter(Restaurant.id==restaurant_id)[0]
+					session.delete (this_r)
+					session.commit ()
 
-			#	output = '<html><body>'
-
-			#	for i in parse_qs(urlparse(self.path).query):
-			#		output += i
-
-			#	output += '</body></html>'
-			#	self.wfile.write(output)
-			#	return
+					output = ''
+					output += '<html><body>'
+					output += '<h2> Restaurant has been removed from database. </h2>'
+					output += '<a href = "/restaurants">Home</a>'
+					output += '</body></html>'
+					self.wfile.write(output)
+					return
 
 		except:
 			pass
