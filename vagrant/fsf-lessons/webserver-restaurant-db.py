@@ -15,7 +15,7 @@ from ormtest import Base, Restaurant, MenuItem
 engine = create_engine('sqlite:///restaurantmenu.db')
 
 # start a session for CRUD actions
-#Base.metadata.bind = engine 	# returning Base not defined
+Base.metadata.bind = engine
 DBSession = sessionmaker (bind = engine)
 session = DBSession()
 
@@ -37,7 +37,7 @@ class webserverHandler (BaseHTTPRequestHandler):
 		try:
 			# check for main /restaurants path
 			# 	- list all entries in db
-			# 	- link to edit and delete leading to post requests for each entry
+			# 	- link to create, update, delete leading to post requests for each entry
 			if self.path.endswith('/restaurants'):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
@@ -47,6 +47,7 @@ class webserverHandler (BaseHTTPRequestHandler):
 				restaurants = session.query(Restaurant).order_by(asc('restaurant.name')).all()
 				output = ''
 				output += '<html><body>'
+				output += '<a href="/restaurants/new">Add a new restaurant!</a>'
 				for r in restaurants:
 					output += '<h2> %s </h2>'%r.name
 					output += '<a href = "/restaurants/%s/edit">edit</a> <a href = "/restaurants/%s/delete">delete</a>'%(r.id,r.id)
