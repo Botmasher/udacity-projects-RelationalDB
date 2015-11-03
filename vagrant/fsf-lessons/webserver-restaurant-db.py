@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 
 # import restaurant db classes
-from ormtest import Restaurant,MenuItem
+from ormtest import Base, Restaurant, MenuItem
 engine = create_engine('sqlite:///restaurantmenu.db')
 
 # start a session for CRUD actions
