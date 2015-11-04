@@ -2,7 +2,7 @@
 import sys
 
 # CONFIG ORM
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
 # CONFIG create foreign key relationships
@@ -21,21 +21,22 @@ class Restaurant (Base):
 	# TABLE setup
 	__tablename__ = 'restaurant'
 	# MAPPER variables for columns in table
-	name = Column(String(80), nullable = False)
-	id = Column(Integer, primary_key = True)
+	name = Column (String(80), nullable = False)
+	id = Column (Integer, primary_key = True)
 
 # CLASS represent menu items table, extending base class	
 class MenuItem (Base):
 	# TABLE setup
-	__tablename__ = 'menu_item'
+	__tablename__ = 'menuitem'
 	# MAPPER variables for columns in table
 	name = Column (String(80), nullable = False)
 	id = Column (Integer, primary_key = True)
-	course = Column(String(250))
+	course = Column (String(250))
+	price = Column (Float())
 	description = Column (String(720))
-	restaurant_id = Column(Integer, ForeignKey('restaurant.id'))
+	restaurant_id = Column (Integer, ForeignKey('restaurant.id'))
 	# store relationship with my class restaurant
-	restaurant = relationship(Restaurant)
+	restaurant = relationship (Restaurant)
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #

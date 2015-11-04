@@ -21,8 +21,7 @@ session = DBSession()
 
 # mock up a little test database with my orm classes
 new_restaurants = ['John\'s House', 'Pizza Nut', 'Spanish Salsa', 'Gobbledies', 'Beganensis'] 
-session.query(Restaurant).delete()	# clear out all entries from both tables
-session.query(MenuItem).delete()	# clear out all entries from both tables
+session.query(Restaurant).delete()	# clear out all entries from table
 # refill tables
 for n in new_restaurants:
 	new_restaurant = Restaurant(name=n)
