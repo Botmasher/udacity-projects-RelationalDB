@@ -1,5 +1,5 @@
 # basic flask stuff
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for, flash
 app = Flask (__name__)
 
 # sqlalchemy stuff
@@ -24,19 +24,79 @@ for x in range(0,len(menu_items)):
 	session.add(new_item)
 session.commit()					# persist the changes
 
+
 # decorator functions to catch routes
 @app.route('/')
-@app.route('/hello')
+@app.route('/restaurant/')
 # if successfully route, execute this
-def HelloWorld ():
-	restaurant = session.query(Restaurant).first()
-	items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
+def restaurants():
+	restaurants = session.query(Restaurant).all()
 	output = ''
-	for i in items:
-		output += '<h2>'+i.name+'</h2>'
-		output += '<p>'+'{0:.2f}'.format(round(i.price,2))+'</p>'
-		output += '<p>'+i.description+'</p>'
+	for r in restaurants:
+		output += '<p><a href="/restaurant/%s">%s</a></p>'%(r.id,r.name)
 	return output
+
+
+# when user clicks on specific restaurant from root
+@app.route('/restaurant/<int:restaurant_id>/')
+def restaurantMenu(restaurant_id):
+	# get the restaurant and associated menu items
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)
+	items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
+	# return rendered page (/templates/menu.html) formatting the restaurant and its menu
+	return render_template ('menu.html', restaurant=restaurant[0], items=items)
+
+
+# create new menu item for restaurant with this id
+@app.route('/restaurant/<int:restaurant_id>/new/', methods=['GET','POST'])
+def newMenuItem(restaurant_id):
+	# catch form POST method at this URL (form method from GET template below)
+	if request.method=='POST':
+		# create a new menu item associated with this restaurant and add it to the db
+		new_item = MenuItem (name=request.form['item_name'], restaurant_id=restaurant_id)
+		session.add (new_item)
+		session.commit()
+		# redirect to the restaurant menu route
+		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
+	# GET requests go to template form for adding an item to this restaurant
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
+	return render_template ('new.html',restaurant=restaurant)
+
+
+# edit an existing menu item after clicking on edit href in restaurantMenu template
+@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/', methods=['GET','POST'])
+def editMenuItem(restaurant_id, menu_id):
+	# catch form POST method at this URL (form method from GET template below)
+	if request.method=='POST':
+		# create a new menu item associated with this restaurant and add it to the db
+		mod_item = session.query(MenuItem).filter_by(id=menu_id)[0]
+		mod_item.name = request.form['item_name']
+		session.add (mod_item)
+		session.commit()
+		# redirect to the restaurant menu route
+		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
+	# GET requests go to template form for adding an item to this restaurant
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
+	item = session.query(MenuItem).filter_by(id=menu_id)[0]
+	return render_template ('edit.html',restaurant=restaurant,item=item)
+
+
+# delete an existing menu item after clicking on delete href in restaurantMenu template
+@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/delete/', methods=['GET','POST'])
+def deleteMenuItem(restaurant_id, menu_id):
+	# catch form POST method at this URL (form method from GET template below)
+	if request.method=='POST':
+		# create a new menu item associated with this restaurant and add it to the db
+		this_item = session.query(MenuItem).filter_by(id=menu_id)[0]
+		session.delete (this_item)
+		session.commit()
+		# redirect to the restaurant menu route
+		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
+	# GET requests go to template form for adding an item to this restaurant
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
+	item = session.query(MenuItem).filter_by(id=menu_id)[0]
+	return render_template ('delete.html',restaurant=restaurant,item=item)
+
 
 # run if this is app but not if imported as module
 if __name__ == '__main__':
