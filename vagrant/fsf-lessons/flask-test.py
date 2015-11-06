@@ -1,5 +1,5 @@
 # basic flask stuff
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 app = Flask (__name__)
 
 # sqlalchemy stuff
@@ -15,7 +15,7 @@ session = DBSession()
 
 # mock up a little test database with my orm classes
 menu_items = ['this pizza', 'that pizza', 'thother pizza', 'nuffies pizza']
-menu_prices = [9.50, 8.99, 10.95, 7.00]
+menu_prices = [9.95, 8.99, 10.95, 7.05]
 menu_desc = ['No man can has cheesier than this one. And that is the Germanic people manniz, meaning everyone.','That sauce is better with more sauce.', 'Finally... a pizza that takes being a pizza seriously.', 'You can\'t eat the void but you can pay for it.']
 session.query(MenuItem).delete()
 # refill tables
@@ -56,6 +56,8 @@ def newMenuItem(restaurant_id):
 		new_item = MenuItem (name=request.form['item_name'], restaurant_id=restaurant_id)
 		session.add (new_item)
 		session.commit()
+		# message flashing
+		flash("You just created a new menu item!")
 		# redirect to the restaurant menu route
 		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
 	# GET requests go to template form for adding an item to this restaurant
@@ -73,6 +75,8 @@ def editMenuItem(restaurant_id, menu_id):
 		mod_item.name = request.form['item_name']
 		session.add (mod_item)
 		session.commit()
+		# message flashing
+		flash ("You just edited an item!")
 		# redirect to the restaurant menu route
 		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
 	# GET requests go to template form for adding an item to this restaurant
@@ -90,6 +94,8 @@ def deleteMenuItem(restaurant_id, menu_id):
 		this_item = session.query(MenuItem).filter_by(id=menu_id)[0]
 		session.delete (this_item)
 		session.commit()
+		# message flashing
+		flash ("You just deleted an item!")
 		# redirect to the restaurant menu route
 		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
 	# GET requests go to template form for adding an item to this restaurant
@@ -98,9 +104,28 @@ def deleteMenuItem(restaurant_id, menu_id):
 	return render_template ('delete.html',restaurant=restaurant,item=item)
 
 
+# catch requests for JSON data
+@app.route('/restaurant/<int:restaurant_id>/JSON/')
+def restaurantMenuJSON(restaurant_id):
+	# query for appropriate items
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+	items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
+	# rely on @property serialize for MenuItem class in ormtest.py
+	return jsonify(MenuItems = [i.serialize for i in items])
+
+@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
+def restaurantMenuItemJSON(restaurant_id, menu_id):
+	# query for this item
+	item = session.query(MenuItem).filter_by(id=menu_id).one()
+	# return @property serialize defined in ormtest.py as JSON
+	return jsonify(MenuItem = [item.serialize])
+
+
 # run if this is app but not if imported as module
 if __name__ == '__main__':
 	# reload server every time notice code change
 	app.debug = True
+	# session secret key for message flashing
+	app.secret_key = 'super_secret_key'
 	# for accessing and running on vagrant
 	app.run(host = '0.0.0.0', port = 5000)

@@ -38,6 +38,19 @@ class MenuItem (Base):
 	# store relationship with my class restaurant
 	restaurant = relationship (Restaurant)
 
+	# serialize JSON data for API
+	@property
+	def serialize(self):
+		return {
+			'name': self.name,
+			'price': self.price,
+			'course': self.course,
+			'id': self.id,
+			'description': self.description,
+			'restaurant_id': self.restaurant_id
+		}
+
+
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
 engine = create_engine('sqlite:///restaurantmenu.db')

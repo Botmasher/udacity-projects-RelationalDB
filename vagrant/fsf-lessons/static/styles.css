@@ -1,0 +1,55 @@
+html {
+
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	font-family: Helvetica, sans-serif;
+	background-color: orange;
+}
+
+.wrapper {
+	margin-left: 30%;
+	margin-right: 30%;
+	margin-top: 3%;
+	padding: 2%;
+	max-width: 38%;
+	border: solid;
+	border-radius: 25px;
+	background-color: #cccccc;
+}
+
+h1 {
+	color: #FF8000;
+	border-bottom: solid;
+}
+
+h2 {
+	color: #FF8000;
+	font-style: italic;
+}
+
+h2, p {
+	text-align: left;
+}
+
+.littlelink {
+	font-size: 10px;
+	margin-top: -10;
+	padding-top: 0;
+}
+
+.menuitem {
+	position: relative;
+}
+.menuitem h2 {
+	float: left;
+}
+.menuitem p {
+	float: right;
+}
+.desc {
+	clear: both;
+}
