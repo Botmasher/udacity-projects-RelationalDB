@@ -191,7 +191,7 @@ def distribute_puppies ():
 	return None
 
 
-### TESTS AND CALLS BELOW THIS POINT ###
+### TESTS BELOW THIS POINT ###
 
 # test adding occupancy and capacity to a shelter
 #print(str(get_occupancy(1).occupancy)+'/'+str(get_occupancy(1).capacity))
@@ -200,23 +200,23 @@ def distribute_puppies ():
 #check_in(1,1)
 
 # test for shelter counts
-for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
-	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
+#for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
+#	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
 
 # run occupancy functions
-curate_shelter_capacity()
-set_capacity(1,32)
-set_capacity(3,26)
-set_capacity(4,40)
-distribute_puppies()
-curate_shelter_capacity()
+# curate_shelter_capacity()
+# set_capacity(1,32)
+# set_capacity(3,26)
+# set_capacity(4,40)
+# distribute_puppies()
+# curate_shelter_capacity()
 
 # save changes
-session.commit()
+# session.commit()
 
 # test for shelter counts
-for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
-	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
+#for x in session.query (Shelter.name, Shelter.occupancy, Shelter.capacity).all():
+#	print (str(x[0]) + ': ' + str(x[1]) + ' / '+ str(x[2]))
 
 # test for puppies in shelters
 #for x in session.query (Puppy.name, Shelter.name, Shelter.occupancy, Shelter.capacity).filter(Puppy.shelter_id==Shelter.id).all():
