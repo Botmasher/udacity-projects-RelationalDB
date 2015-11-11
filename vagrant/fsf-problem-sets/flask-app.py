@@ -53,6 +53,71 @@ def puppy(puppy_id):
 	output += '</body></html>'
 	return output
 
+# select specific puppy profile
+@app.route('/add/<int:table>/', methods=['GET','POST'])
+def add (table):
+
+	if request.method=='POST':
+
+		# check if any input fields are empty - send user back to this page
+		for i in request.form:
+			if request.form[i] == '' or request.form[i] == None:
+				return redirect (url_for ('add', table=table))
+
+		# add row to shelter table
+		if table == 0:
+			new_row = Shelter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], capacity=request.form['capacity'])
+		
+		# add row to adopter table
+		elif table == 1:
+			new_row = Adopter (name=request.form['name'])
+		
+		# add row to puppy table
+		else:
+			new_row = Puppy (name=request.form['name'], shelter_id=request.form['shelterID'])
+			new_profile = Profile (puppy_id=new_row.id, breed=request.form['breed'], gender=request.form['gender'], weight=request.form['weight'], picture=request.form['picture'])
+			session.add (new_profile)
+
+		session.add (new_row)
+		session.commit()
+		return redirect (url_for('homePage'))
+
+	# if method is GET display form for user input
+	output = '<html><body><h1>FluppyBase</h1>'
+	output += '<a href="%s">Back to All Puppies</a></p>'%(url_for('homePage'))
+	output += '<form action="" method="POST">'
+	
+	# check which table user is adding to, then display inputs for that table
+	if table == 0:
+		output += '<h2>Add one shelter!</h2>'
+		output += 'Name: <input type="text" name="name"><br>\
+		Address: <input type="text" name="address"><br>\
+		City: <input type="text" name="city"><br>\
+		Zip: <input type="text" name="zipcode"><br>\
+		State: <input type="text" name="state"><br>\
+		Website: <input type="text" name="website"><br>\
+		Capacity: <input type="text" name="capacity"><br>'
+	elif table == 1:
+		output += '<h2>Add one adopter!</h2>'
+		output += 'Name: <input type="text" name="name"><br>'
+	else:
+		output += '<h2>Add one puppy!</h2>'
+		output += '<p>Name: <input type="text" name="name"><br>\
+		Breed: <input type="text" name="breed"><br>\
+		Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female"> F<br>\
+		Weight: <input type="text" name="weight"><br>\
+		Date of birth: <input type="text" name="dateOfBirth"><br>\
+		Picture: <input type="text" name="picture"></p>\
+		Choose a Home Shelter for this puppy: <br>'
+		# select from existing shelters
+		shelters = session.query(Shelter).all()
+		for s in shelters:
+			output += '<input type="radio" name="shelterID" value="%s">'%s.id
+			output += ' &nbsp;%s<br>'%s.name
+	# end form and page - submit to reach POST branch above
+	output += '<p><input type="submit" value="Add"></p></form></body></html>'
+	return output
+
 
 
 
