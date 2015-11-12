@@ -35,6 +35,20 @@ class Shelter (Base):
 	occupancy = Column(Integer)
 	capacity = Column(Integer)
 	id = Column(Integer, primary_key = True)
+	# serialize JSON data for API
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'name': self.name,
+			'address': self.address,
+			'city': self.city,
+			'zipCode': self.zipCode,
+			'state': self.state,
+			'website': self.website,
+			'occupancy': self.occupancy,
+			'capacity': self.capacity
+		}
 
 # ASSOCIATION table for many:many between puppies and adopters
 association_table = Table('association', Base.metadata, Column('left_id', Integer, ForeignKey('puppy.id')), Column('right_id', Integer, ForeignKey('adopter.id')))
@@ -53,12 +67,28 @@ class Puppy (Base):
 	profile = relationship('Profile', uselist=False, backref='puppy')
 	# ASSOCIATION store many-to-many relationship with child table
 	adopter = relationship('Adopter', secondary=association_table, backref='puppy')
+	# serialize JSON data for API
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'name': self.name,
+			'shelter_id': self.shelter_id,
+			'adopter': self.adopter
+		}
 
 # added relation for puppy adopter - many:many association to puppy
 class Adopter (Base):
 	__tablename__ = 'adopter'
 	id = Column(Integer, primary_key = True)
 	name = Column(String(250))
+	# serialize JSON data for API
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'name': self.name
+		}
 
 # added relation for puppy profile - 1:1 association to puppy
 class Profile (Base):
@@ -71,6 +101,18 @@ class Profile (Base):
 	picture = Column(String)
 	# store relationship with foreign key table
 	puppy_id = Column(Integer, ForeignKey('puppy.id'))
+	# serialize JSON data for API
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'breed': self.breed,
+			'gender': self.gender,
+			'weight': self.weight,
+			'dateOfBirth': str(self.dateOfBirth),
+			'picture': self.picture,
+			'puppy_id': self.puppy_id
+		}
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
