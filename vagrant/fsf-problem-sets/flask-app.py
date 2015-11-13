@@ -6,6 +6,9 @@ app = Flask (__name__)
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+# shelter balancing functions
+from puppies_db_setup import get_occupancy, set_occupancy, set_capacity, check_in, curate_shelter_capacity, distribute_puppies
+
 # setup connection for restaurant db
 from puppies_db_setup import Base,Shelter,Puppy,Adopter,Profile
 engine = create_engine ('sqlite:///puppies.db')
@@ -13,14 +16,55 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# session-wide adopter id and name
+logged_in = ['unknown','Login']
 
-# visit root or select browse all puppies
+# visit root
 @app.route('/')
 def homePage():
+	output = '<html><body>\
+			  <p><h1>FluppyBase</h1> <a href="%s">%s</a></p>'%(url_for('login',login_id=logged_in[0]), logged_in[1])
+	output += '<p><a href="%s">Browse our puppies</a> &nbsp; <a href="%s">Browse our shelters</a></p>' % (url_for('puppies'), url_for('shelters'))
+	output += '</body></html>'
+	return output
+
+# simple login routine
+@app.route('/login/<login_id>/', methods=['GET','POST'])
+def login(login_id):
+	if request.method == 'POST':
+		# if new user, prompt to create a profile
+		try:
+			user = session.query(Adopter).filter_by(name=request.form['name'],password=request.form['pwd'])[0]
+		except:
+			return redirect (url_for('add', table='adopter'))
+		logged_in[0] = user.id
+		logged_in[1] = user.name
+		return redirect (url_for('homePage'))
+
+	# if not logged in, check 
+	if login_id == 'unknown':
+		output = '<html><body>'
+		output += '<h1>FluppyBase</h1>'
+		output += '<form action="" method="POST">'
+		output += '<input type="text" name="name" placeholder="Username"><br>'
+		output += '<input type="text" name="pwd" placeholder="password"><br>'
+		output += '<input type="submit" value="Login"> / <a href="%s">new user</a>'%(url_for('add',table='adopter'))
+		output += '</form></body></html>'
+		return output
+	# if logged in, click to update your profile
+	else:
+		return redirect (url_for('adopter',adopter_id=login_id))
+
+
+# browse all puppies
+@app.route('/puppies/')
+def puppies():
 	puppies = session.query(Puppy).all()
 	pictures = session.query(Profile.picture).all()
-	output = '<html><body><h1>FluppyBase</h1>'
+	output = '<html><body><p><h1>FluppyBase</h1>\
+			  <a href="%s">%s</a></p>'%(url_for('login',login_id=logged_in[0]), logged_in[1])
 	output += '<a href="/shelters/">Search by Shelter</a></p>'
+	output += '<a href="%s">+ add a puppy</a>'%(url_for('add',table='puppy'))
 	for p in puppies:
 		output += '<p>'
 		output += '<h2><a href="/puppy/%s">%s</a></h2> <br><img src="%s" alt="puppy picture for %s" style="width: 25vw">'%(p.id,p.name,session.query(Profile).filter_by(id=p.id)[0].picture,p.name)
@@ -32,34 +76,91 @@ def homePage():
 
 
 # browse all shelters
-@app.route('/shelters/')
+@app.route('/shelters/', methods=['GET','POST'])
 def shelters():
+	if request.method == 'POST':
+		distribute_puppies()
+		return redirect (url_for('shelters'))
+
 	shelters = session.query(Shelter).all()
-	output = '<html><body><h1>FluppyBase</h1>'
-	output += '<a href="%s">Search by Puppy</a></p>'%(url_for('homePage'))
+	output = '<html><body><p><h1>FluppyBase</h1>\
+			  <a href="%s">%s</a></p>'%(url_for('login',login_id=logged_in[0]), logged_in[1])
+	output += '<a href="%s">Search by Puppy</a></p>'%(url_for('puppies'))
+	output += '<p><form action="" method="POST"><input type="submit" value="Rebalance Puppies!"></form></p>'
 	for s in shelters:
 		output += '<h2><a href="/shelter/%s">%s</a></h2>'%(s.id,s.name)
+		output += '<br>puppies: %s <br> capacity: %s'%(s.occupancy,s.capacity)
 		output += '<br><a href="%s">edit</a> &nbsp; &nbsp;'%(url_for('edit',table='shelter',index=s.id))
 		output += '<a href="%s">delete</a>'%(url_for('delete',table='shelter',index=s.id))
 	output += '</body></html>'
 	return output
 
 
-# select specific puppy profile
-@app.route('/puppy/<int:puppy_id>/')
+# select specific puppy profile and choose to adopt
+@app.route('/puppy/<int:puppy_id>/', methods=['GET','POST'])
 def puppy(puppy_id):
+	# adopt the puppy or warn that user is not logged in to adopt
+	if request.method == 'POST':
+		if logged_in[0] == 'unknown':
+			flash("Please login or create a profile to adopt puppies.")
+		else:
+			adopter = session.query(Adopter).filter_by(id=logged_in[0]).first()
+			adopter.puppy_id = puppy_id
+			session.commit()
+			flash("Thank you for adopting a puppy! Click your profile to see all your puppies.")
+		return redirect (url_for('homePage'))
+
 	# get the puppy and associated profile
 	puppy = session.query(Puppy).filter_by(id=puppy_id).first()
 	profile = session.query(Profile).filter_by(id=puppy_id).first()
+	shelter = session.query(Shelter).filter_by(id=puppy.shelter_id).first()
 	output = '<html><body><h1>FluppyBase</h1>'
-	output += '<a href="%s">Back to All Puppies</a></p>'%(url_for('homePage'))
-	output += '<h2>%s</h2><img src="%s">\
-					<ul><li>Breed: %s</li>\
-					<li>Gender: %s</li>\
-					<li>Date of birth: %s</li>\
-					<li>Weight: %s</li>\
-					<li>Left ear: sloppy</li>\
-					<li>Right ear: blopsy</li></ul>'%(puppy.name, profile.picture, profile.breed, profile.gender, profile.dateOfBirth, profile.weight)
+	output += '<a href="%s">Back to All Puppies</a></p>'%(url_for('puppies'))
+	output += '<h2>%s</h2>\
+				<p><a href ="%s">edit</a></p>\
+				<img src="%s">\
+				<ul><li>Breed: %s</li>\
+				<li>Home shelter: <a href="%s">%s</a></li>\
+				<li>Gender: %s</li>\
+				<li>Date of birth: %s</li>\
+				<li>Weight: %s</li>\
+				<li>Left ear: sloppy</li>\
+				<li>Right ear: blopsy</li></ul>'%(puppy.name, url_for('edit',table='puppy',index=puppy_id), profile.picture, profile.breed, url_for('shelter',shelter_id=shelter.id), shelter.name, profile.gender, profile.dateOfBirth, profile.weight)
+	# button for adopting if not already adopted
+	if session.query(Adopter).filter_by(puppy_id=puppy_id).first() == None:
+		output += '<p><form action="" method="POST"><input type="submit" value="Adopt me!"></form></p>'
+	output += '</body></html>'
+	return output
+
+
+# select specific shelter profile
+@app.route('/shelter/<int:shelter_id>/')
+def shelter(shelter_id):
+	# get the puppy and associated profile
+	shelter = session.query(Shelter).filter_by(id=shelter_id).first()
+	output = '<html><body><h1>FluppyBase</h1>'
+	output += '<a href="%s">Back to All Shelters</a></p>'%(url_for('shelters'))
+	output += '<h2>%s</h2>\
+			   <p>%s<br>%s, %s %s<br><a href="http://%s">%s</a></p>'%(shelter.name, shelter.address, shelter.city, shelter.state, shelter.zipCode, shelter.website, shelter.website)
+	output += '</body></html>'
+	return output
+
+
+# view specific adopter profile
+@app.route('/adopter/<int:adopter_id>/')
+def adopter(adopter_id):
+	adopter = session.query(Adopter).filter_by(id=adopter_id).first()
+	my_puppy = session.query(Puppy).filter_by(id=adopter.puppy_id).first()
+	
+	output = '<html><body><h1>FluppyBase</h1>'
+	output += '<p>Please update your puppy lovin info:</p>'
+	output += '<h2>%s</h2><p>%s<br>%s, %s %s<br>%s<br>%s</p>' % (adopter.name, adopter.address, adopter.city, adopter.state, adopter.zipCode, adopter.email, adopter.website)
+	output += '<p><a href = "%s">Edit my info</a></p>' % (url_for('edit',table='adopter',index=adopter_id))
+
+	# display adopted puppies if you have any
+	if my_puppy != None:
+		output += '<h2>Puppies I\'ve adopted</h2>'
+		output += '<p><img src="%s" alt="picture of puppy %s"><br><a href="%s">%s</a></p>>' % (my_puppy.picture, my_puppy.name, url_for('puppy',puppy_id=my_puppy.id), my_puppy.name)
 	output += '</body></html>'
 	return output
 
@@ -81,11 +182,17 @@ def add (table):
 		
 		# add row to adopter table
 		elif table == 'adopter':
-			new_row = Adopter (name=request.form['name'])
+			new_row = Adopter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], email=request.form['email'], password=request.form['pwd'])
 		
 		# add row to puppy table
 		elif table == 'puppy':
+			# try checking puppy in to shelter if shelter not full
 			new_row = Puppy (name=request.form['name'], shelter_id=request.form['shelterID'])
+			if session.query(Shelter).filter_by(id=new_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=new_row.shelter_id)[0].capacity:
+				# HOMELESS! - we can't place the puppy!
+				new_row.shelter_id = None
+				flash("Unable to place puppy - currently has no home shelter!")
+			# create profile entry for this puppy too
 			new_profile = Profile (puppy_id=new_row.id, breed=request.form['breed'], gender=request.form['gender'], weight=request.form['weight'], picture=request.form['picture'])
 			session.add (new_profile)
 		
@@ -96,12 +203,14 @@ def add (table):
 		# add whichever row was created above to the db
 		session.add (new_row)
 		session.commit()
+		# update shelter totals
+		curate_shelter_capacity()
 		# go home
 		return redirect (url_for('homePage'))
 
 	# if method is GET display form for user input
 	output = '<html><body><h1>FluppyBase</h1>'
-	output += '<a href="%s">Back to Puppies</a> &nbsp; <a href="%s">Back to Shelters</a></p>'%(url_for('homePage'), url_for('shelters'))
+	output += '<a href="%s">Back to Puppies</a> &nbsp; <a href="%s">Back to Shelters</a></p>'%(url_for('puppies'), url_for('shelters'))
 	output += '<form action="" method="POST">'
 	
 	# check which table user is adding to, then build form for that table
@@ -116,8 +225,15 @@ def add (table):
 		Capacity: <input type="text" name="capacity"><br>'
 
 	elif table == 'adopter':
-		output += '<h2>Add one adopter!</h2>'
-		output += 'Name: <input type="text" name="name"><br>'
+		output += '<h2>Become an adopter!</h2>'
+		output += 'User: <input type="text" name="name"><br>'
+		output += 'Address: <input type="text" name="address"><br>'
+		output += 'City: <input type="text" name="city"><br>'
+		output += 'State: <input type="text" name="state"><br>'
+		output += 'Zip: <input type="text" name="zipcode"><br>'
+		output += 'Website: <input type="text" name="website"><br>'
+		output += 'Email: <input type="text" name="email"><br>'
+		output += 'Password: <input type="text" name="pwd"><br>'
 
 	elif table == 'puppy':
 		output += '<h2>Add one puppy!</h2>'
@@ -169,11 +285,19 @@ def edit (table, index):
 		elif table == 'adopter':
 			mod_row = session.query(Adopter).filter_by(id=index)[0]
 			mod_row.name = request.form['name']
+			mod_row.address = request.form['address']
+			mod_row.city = request.form['city']
+			mod_row.zipCode = request.form['zipcode']
+			mod_row.state = request.form['state']
+			mod_row.email = request.form['email']
+			mod_row.website = request.form['website']
+			mod_row.password = request.form['password']
 		
 		# add row to puppy table
 		elif table == 'puppy':
 			mod_row = session.query(Puppy).filter_by(id=index)[0]
 			mod_row.name = request.form['name']
+			last_id = mod_row.shelter_id	# store current shelter in case new one is full
 			mod_row.shelter_id = request.form['shelterID']
 			mod_profile = session.query(Profile).filter_by(id=index)[0]
 			mod_profile.breed = request.form['breed']
@@ -181,6 +305,11 @@ def edit (table, index):
 			mod_profile.weight = request.form['weight']
 			mod_profile.picture = request.form['picture']
 			session.add (mod_profile)
+			# catch overflow puppies and unassign from full shelter
+			if session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].capacity:
+				# shelter full - move to previous shelter
+				flash("Shelter full! Unable to move puppy - staying in current home shelter!")
+				mod_row.shelter_id = last_id				
 
 		# found no table corresponding to url var - return home instead
 		else:
@@ -189,11 +318,13 @@ def edit (table, index):
 		# edit row updated above in the db
 		session.add (mod_row)
 		session.commit()
+		# update shelter totals
+		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
 
 	# if method is GET display form for user input
 	output = '<html><body><h1>FluppyBase</h1>'
-	output += '<a href="%s">Back to Puppies</a> &nbsp; <a href="%s">Back to Shelters</a></p>'%(url_for('homePage'), url_for('shelters'))
+	output += '<a href="%s">Back to Puppies</a> &nbsp; <a href="%s">Back to Shelters</a></p>'%(url_for('puppies'), url_for('shelters'))
 	output += '<form action="" method="POST">'
 	
 	# check which table user is adding to, then display inputs for that table
@@ -213,7 +344,14 @@ def edit (table, index):
 	elif table == 'adopter':
 		a = session.query(Adopter).filter_by(id=index)[0]
 		output += '<h2>Edit this adopter!</h2>'
-		output += 'Name: <input type="text" name="name" value="%s"><br>'%(a.name)
+		output += 'Name: <input type="text" name="name" value="%s"><br>\
+				   Address: <input type="text" name="address" value="%s"><br>\
+				   City: <input type="text" name="city" value="%s"><br>\
+				   State: <input type="text" name="state" value="%s"><br>\
+				   Zip: <input type="text" name="zipcode" value="%s"><br>\
+				   Email: <input type="text" name="email" value="%s"><br>\
+				   Website: <input type="text" name="website" value="%s"><br>\
+				   Password: <input type="text" name="password"><br>'%(a.name, a.address, a.city, a.state, a.zipCode, a.email, a.website)
 	
 	# read and display puppy and profile info
 	elif table == 'puppy':
@@ -249,6 +387,7 @@ def edit (table, index):
 	output += '<p><input type="submit" value="Modify"></p></form></body></html>'
 	return output
 
+
 # delete a Shelter, Puppy (including Profile) or Adopter from a table
 @app.route('/delete/<table>/<int:index>/', methods=['GET','POST'])
 def delete (table, index):
@@ -281,11 +420,13 @@ def delete (table, index):
 		# edit row updated above in the db
 		session.delete (this_entry)
 		session.commit()
+		# update shelter totals
+		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
 
 	# if method is GET display form for user to confirm the delete
 	output = '<html><body><h1>FluppyBase</h1>'
-	output += '<a href="%s">Back to All Puppies</a></p>'%(url_for('homePage'))
+	output += '<a href="%s">Back to All Puppies</a></p>'%(url_for('puppies'))
 	output += '<form action="" method="POST">'
 	
 	# check which table user is deleting from and display warning
@@ -305,65 +446,6 @@ def delete (table, index):
 	output += '<p>This action cannot be undone!</p>\
 			   <p><input type="submit" value="Delete"></p></form></body></html>'
 	return output
-
-
-
-
-# create new menu item for restaurant with this id
-@app.route('/restaurant/<int:restaurant_id>/new/', methods=['GET','POST'])
-def newMenuItem(restaurant_id):
-	# catch form POST method at this URL (form method from GET template below)
-	if request.method=='POST':
-		# create a new menu item associated with this restaurant and add it to the db
-		new_item = MenuItem (name=request.form['item_name'], restaurant_id=restaurant_id)
-		session.add (new_item)
-		session.commit()
-		# message flashing
-		flash("You just created a new menu item!")
-		# redirect to the restaurant menu route
-		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
-	# GET requests go to template form for adding an item to this restaurant
-	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
-	return render_template ('new.html',restaurant=restaurant)
-
-
-# edit an existing menu item after clicking on edit href in restaurantMenu template
-@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/', methods=['GET','POST'])
-def editMenuItem(restaurant_id, menu_id):
-	# catch form POST method at this URL (form method from GET template below)
-	if request.method=='POST':
-		# create a new menu item associated with this restaurant and add it to the db
-		mod_item = session.query(MenuItem).filter_by(id=menu_id)[0]
-		mod_item.name = request.form['item_name']
-		session.add (mod_item)
-		session.commit()
-		# message flashing
-		flash ("You just edited an item!")
-		# redirect to the restaurant menu route
-		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
-	# GET requests go to template form for adding an item to this restaurant
-	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
-	item = session.query(MenuItem).filter_by(id=menu_id)[0]
-	return render_template ('edit.html',restaurant=restaurant,item=item)
-
-
-# delete an existing menu item after clicking on delete href in restaurantMenu template
-@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/delete/', methods=['GET','POST'])
-def deleteMenuItem(restaurant_id, menu_id):
-	# catch form POST method at this URL (form method from GET template below)
-	if request.method=='POST':
-		# create a new menu item associated with this restaurant and add it to the db
-		this_item = session.query(MenuItem).filter_by(id=menu_id)[0]
-		session.delete (this_item)
-		session.commit()
-		# message flashing
-		flash ("You just deleted an item!")
-		# redirect to the restaurant menu route
-		return redirect (url_for('restaurantMenu',restaurant_id=restaurant_id))
-	# GET requests go to template form for adding an item to this restaurant
-	restaurant = session.query(Restaurant).filter_by(id=restaurant_id)[0]
-	item = session.query(MenuItem).filter_by(id=menu_id)[0]
-	return render_template ('delete.html',restaurant=restaurant,item=item)
 
 
 # catch requests for JSON data

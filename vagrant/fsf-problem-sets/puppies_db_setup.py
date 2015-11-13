@@ -81,13 +81,28 @@ class Puppy (Base):
 class Adopter (Base):
 	__tablename__ = 'adopter'
 	id = Column(Integer, primary_key = True)
-	name = Column(String(250))
+	name = Column(String(250), nullable = False)
+	website = Column(String(250))
+	address = Column(String(250))
+	city = Column(String(80))
+	state = Column(String(80))
+	zipCode = Column(Integer)
+	email = Column(String(250))
+	password = Column(String(250))
+	puppy_id = Column(Integer,ForeignKey('puppy.id'))
 	# serialize JSON data for API
 	@property
 	def serialize(self):
 		return {
 			'id': self.id,
-			'name': self.name
+			'name': self.name,
+			'website': self.website,
+			'address': self.address,
+			'city': self.city,
+			'state': self.state,
+			'zipCode': self.zipCode,
+			'email': self.email,
+			'puppy_id': self.puppy_id
 		}
 
 # added relation for puppy profile - 1:1 association to puppy
@@ -181,15 +196,17 @@ def curate_shelter_capacity (reset_cap=False):
 	shelters = session.query(Puppy.shelter_id, func.count(Puppy.id)).group_by(Puppy.shelter_id).all()
 	# update each shelter with its current number of puppies
 	for shelter in shelters:
+		print shelter[1]
 		session.execute ( update(Shelter).where(Shelter.id == shelter[0]).values (occupancy=shelter[1], capacity=this_cap) )
+		session.commit()
 	return None
 
 
 def distribute_puppies ():
 	"""Evenly balance the number of puppies spread throughout the shelter system.
 
-	:param None: No inputs.
-	:returns: None
+	:param None: No inputs. Make sure this function has access to Puppy and Shelter tables.
+	:returns: True if all puppies are placed. False if unable to place all puppies (overflow).
 	"""
 	# calculate totals to determine overall balance 
 	total_puppies_to_place = session.query(func.count(Puppy.id)).first()[0]
@@ -215,7 +232,7 @@ def distribute_puppies ():
 		# if all shelters are full, prompt user to open a new shelter
 		if session.query(func.sum(Shelter.occupancy)).first()[0] >= session.query(func.sum(Shelter.capacity)).first()[0]:
 			print ('We placed as many puppies as possible, but there aren\'t enough shelters! Please consider opening a new one!')
-			return None
+			return False
 		else:
 			# place this puppy
 			session.execute(update(Puppy).where(Puppy.id==total_puppies_to_place).values(shelter_id=this_shelter))
@@ -230,7 +247,7 @@ def distribute_puppies ():
 				this_shelter += 1
 
 	# EXTRA challenge (by Josh): move puppies as little as possible!
-	return None
+	return True
 
 
 ### TESTS BELOW THIS POINT ###

@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from puppies_db_setup import Base, Shelter, Puppy, Profile
+from puppies_db_setup import Base, Shelter, Puppy, Profile, Adopter, curate_shelter_capacity
 #from flask.ext.sqlalchemy import SQLAlchemy
 from random import randint
 import datetime
@@ -16,6 +16,13 @@ DBSession = sessionmaker(bind=engine)
 
 session = DBSession()
 
+
+# wipe the db
+session.query(Adopter).delete()
+session.query(Profile).delete()
+session.query(Puppy).delete()
+session.query(Shelter).delete()
+session.commit()
 
 #Add Shelters
 shelter1 = Shelter(name = "Oakland Animal Services", address = "1101 29th Ave", city = "Oakland", state = "California", zipCode = "94601", website = "oaklandanimalservices.org", capacity = 52)
@@ -66,3 +73,6 @@ for i,x in enumerate(female_names):
 	session.add(new_puppy)
 	session.add(new_profile)
 	session.commit()
+
+# fill in occupancy for each shelter by counting puppies (capacity already set above)
+curate_shelter_capacity()
