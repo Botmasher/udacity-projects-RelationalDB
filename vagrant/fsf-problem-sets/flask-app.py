@@ -129,6 +129,8 @@ def puppy(puppy_id):
 	# button for adopting if not already adopted
 	if session.query(Adopter).filter_by(puppy_id=puppy_id).first() == None:
 		output += '<p><form action="" method="POST"><input type="submit" value="Adopt me!"></form></p>'
+	else:
+		output += '<p><em>Someone adopted me! I have a home now!</em></p>'
 	output += '</body></html>'
 	return output
 
@@ -151,6 +153,7 @@ def shelter(shelter_id):
 def adopter(adopter_id):
 	adopter = session.query(Adopter).filter_by(id=adopter_id).first()
 	my_puppy = session.query(Puppy).filter_by(id=adopter.puppy_id).first()
+	my_puppy_profile = session.query(Profile).filter_by(id=adopter.puppy_id).first()
 	
 	output = '<html><body><h1>FluppyBase</h1>'
 	output += '<p>Please update your puppy lovin info:</p>'
@@ -160,7 +163,7 @@ def adopter(adopter_id):
 	# display adopted puppies if you have any
 	if my_puppy != None:
 		output += '<h2>Puppies I\'ve adopted</h2>'
-		output += '<p><img src="%s" alt="picture of puppy %s"><br><a href="%s">%s</a></p>>' % (my_puppy.picture, my_puppy.name, url_for('puppy',puppy_id=my_puppy.id), my_puppy.name)
+		output += '<p><img src="%s" alt="picture of puppy %s"><br><a href="%s">%s</a></p>' % (my_puppy_profile.picture, my_puppy.name, url_for('puppy',puppy_id=my_puppy.id), my_puppy.name)
 	output += '</body></html>'
 	return output
 
