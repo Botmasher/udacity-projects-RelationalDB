@@ -1,50 +1,57 @@
 <html>
 <head>
 	<title>FluppyBase 9000</title>
-	<link href="../static/styles.css" rel="stylesheet">
+	<link href="/static/styles.css" rel="stylesheet">
+	<link href="/static/bootstrap-theme.min.css" rel="stylesheet">
+	<link href="/static/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
 
-	<section class = "container">
+	<section class = "center-block container">
+
+		<!-- main block -->
 
 		<!-- logo, header, login -->
-		<section = "logo">
-			<h1 class = "logo-left">FluppyBase</h1>
-			<p class = "logo-center">
-				<a href = "{{ url_for('puppies') }}">Our Puppies</a>
-				&nbsp; &nbsp;
-				<a href = "{{ url_for('shelters') }}">Our Shelters</a>
-			</p>
-			<p class = "logo-right">
+		<section class = "header row well">
+			<div class="col-md-5 col-xs-12">
+				<h1><span class="logo-text">FluppyBase</span><span class="logo-icon">犭</span></h1>
+			</div>
+			<div class="col-md-3 col-xs-4 menu-item">
+				<a href="{{ url_for('puppies') }}">Our Puppies</a>
+			</div>
+			<div class="col-md-3 col-xs-4 menu-item">
+				<a href="{{ url_for('shelters') }}">Our Shelters</a>
+			</div>
+			<div class="text-right col-md-1 col-xs-2 menu-login">
 				<a href="{{ url_for('login',login_id=login[0]) }}">{{ login[1] }}</a>
-			</p>
+			</div>
 		</section>
 
-		<!-- message flashing -->
-		<section>
-		{% with messages = get_flashed_messages() %}
-			{% if messages %}
-			<ul>
-				{% for message in messages %}
-					<li><strong> {{message}} </strong></li>
-				{% endfor %}
-			</ul>
-			{% endif %}
-		{% endwith %}
-		</section>
+		<section class = "main row">
+			<!-- message flashing -->
+			<div>
+			{% with messages = get_flashed_messages() %}
+				{% if messages %}
+				<ul>
+					{% for message in messages %}
+						<li><strong> {{message}} </strong></li>
+					{% endfor %}
+				</ul>
+				{% endif %}
+			{% endwith %}
+			</div>
 
-		<!-- main app content -->
-		<section>
+			<!-- main app content -->
 			{{ content }}
 		</section>
 
 		<!-- bottom of page -->
-		<section class = "footer">
-			<p class = "footer">2015 Udacity project by Botmasher (Josh)</p>
+		<section class = "footer well">
+			<p>2015 Udacity project by Botmasher (Josh)</p>
 		</section>
 
-	<section>
+	</section>
 
 </body>
 </html>

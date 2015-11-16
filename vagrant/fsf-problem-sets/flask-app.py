@@ -2,8 +2,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 app = Flask (__name__)
 
+import math
+
 # sqlalchemy stuff
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func, distinct
 from sqlalchemy.orm import sessionmaker
 
 # shelter balancing functions
@@ -41,9 +43,9 @@ def login(login_id):
 	# if not logged in, check for username and password
 	if login_id == 'unknown':
 		output = '<form action="" method="POST">'
-		output += '<input type="text" name="name" placeholder="Username"><br>'
-		output += '<input type="text" name="pwd" placeholder="password"><br>'
-		output += '<input type="submit" value="Login"> / <a href="%s">new user</a>'%(url_for('add',table='adopter'))
+		output += '<p><input type="text" name="name" placeholder="Username"></p>'
+		output += '<p><input type="text" name="pwd" placeholder="password"></p>'
+		output += '<p><input type="submit" value="Login"> / <a href="%s">new user</a></p>'%(url_for('add',table='adopter'))
 		output += '</form>'
 		return render_template('main.php', login=logged_in, content=output)
 	# if logged in, click name to update your profile
@@ -53,16 +55,56 @@ def login(login_id):
 
 # browse all puppies
 @app.route('/puppies/')
-def puppies():
+@app.route('/puppies/page/<int:page>')
+def puppies(page=1):
+	# get all puppies from db
 	puppies = session.query(Puppy).all()
 	pictures = session.query(Profile.picture).all()
+
+	# link to add puppy form
 	output = '<p><a href="%s">+ add a puppy</a></p>'%(url_for('add',table='puppy'))
+
+	# link to paginate results if over a certain threshold
+	p_count = session.query(func.count(distinct(Puppy.id))).first()[0] 	# how many puppies in db?
+	results_per_page = 36.0 	# how many puppies to display on a single page?
+	
+	# cut results into chunks if there are more puppies than allowed on a page
+	if p_count > results_per_page:
+		# catch cutting list between page n and page n+1 results => index out of range
+		try:
+			# have multiple pages of results - just cut current page chunk from list
+			puppies = [puppies[i] for i in range(int((page-1)*results_per_page),int(page*results_per_page))]
+			pictures = [pictures[i] for i in range(int((page-1)*results_per_page),int(page*results_per_page))]
+		except:
+			# on last page with less than total results per page - get last chunk of list
+			puppies = [puppies[i] for i in range(int((page-1)*results_per_page), len(puppies)-1)]
+			pictures = [pictures[i] for i in range(int((page-1)*results_per_page), len(pictures)-1)]
+
+		# list all available pages for viewer to access all results
+		output += '<p style="text-align:center;">page '
+
+		# divide this count up into pages and link to those pages
+		for i in range( 0, int (math.ceil(p_count/results_per_page)) ):
+			output += '&nbsp;<a href="%s">%s</a>'%(url_for('puppies',page=i+1), str(i+1))
+		output += '</p>'
+
+	# format each puppy entry within rows of puppy image/text
+	counter = 0
 	for p in puppies:
-		output += '<p>'
-		output += '<h2><a href="/puppy/%s">%s</a></h2> <br><img src="%s" alt="puppy picture for %s" style="width: 25vw">'%(p.id,p.name,session.query(Profile).filter_by(id=p.id)[0].picture,p.name)
+		# if image/text puppies reach the end of the row, create a new row to wrap around
+		if counter > 5:
+			# start a new row
+			output += '</section><section class = row>'
+			# reset puppies displayed in this row
+			counter = 0
+		# place the text/image block for this puppy
+		output += '<div class="col-md-2">'
+		output += '<h2><a href="/puppy/%s">%s</a></h2> <br><img src="%s" alt="puppy picture for %s" style="width: 10vw">'%(p.id,p.name,session.query(Profile).filter_by(id=p.id)[0].picture,p.name)
 		output += '<br><a href="%s">edit</a> &nbsp; &nbsp;'%(url_for('edit',table='puppy',index=p.id))
 		output += '<a href="%s">delete</a>'%(url_for('delete',table='puppy',index=p.id))
-		output += '</p>'
+		output += '</div>'
+		# count up how many puppies are displayed in this row so far
+		counter += 1
 	
 	return render_template('main.php', login=logged_in, content=output)
 
@@ -87,9 +129,11 @@ def shelters():
 		
 		return redirect (url_for('shelters'))
 
+	# get all shelters from the db
 	shelters = session.query(Shelter).all()
 	output = '<p><a href="%s">+ add a shelter</a></p>'%(url_for('add',table='shelter'))
 	output += '<p><form action="" method="POST"><input type="submit" value="Rebalance Puppies!"></form></p>'
+	# iterate through and display shelters
 	for s in shelters:
 		output += '<h2><a href="/shelter/%s">%s</a></h2>'%(s.id,s.name)
 		output += '<br>puppies: %s <br> capacity: %s'%(s.occupancy,s.capacity)
@@ -119,19 +163,20 @@ def puppy(puppy_id):
 	shelter = session.query(Shelter).filter_by(id=puppy.shelter_id).first()
 	# read puppy info to user
 	output = '<h2>%s</h2>\
-				<p><a href ="%s">edit</a></p>\
 				<img src="%s">\
-				<ul><li>Breed: %s</li>\
-				<li>Home shelter: <a href="%s">%s</a></li>\
-				<li>Gender: %s</li>\
-				<li>Date of birth: %s</li>\
-				<li>Weight: %s</li>\
-				<li>Left ear: sloppy</li>\
-				<li>Right ear: blopsy</li></ul>'%(puppy.name, url_for('edit',table='puppy',index=puppy_id), profile.picture, profile.breed, url_for('shelter',shelter_id=shelter.id), shelter.name, profile.gender, profile.dateOfBirth, profile.weight)
+				<p>Breed: %s</p>\
+				<p>Home shelter: <a href="%s">%s</a></p>\
+				<p>Gender: %s</p>\
+				<p>Date of birth: %s</p>\
+				<p>Weight: %s</p>\
+				<p>Left ear: sloppy</p>\
+				<p>Right ear: blopsy</p>'%(puppy.name, profile.picture, profile.breed, url_for('shelter',shelter_id=shelter.id), shelter.name, profile.gender, profile.dateOfBirth, profile.weight)
 	
 	# button for adopting this puppy if not already adopted
 	if session.query(Adopter).filter_by(puppy_id=puppy_id).first() == None:
-		output += '<p><form action="" method="POST"><input type="submit" value="Adopt me!"></form></p>'
+		output += '<p><br><form action="" method="POST">\
+				   <a href ="%s">edit my profile</a> &nbsp;&nbsp;\
+				   <input type="submit" value="Adopt me!"></form></p>'%url_for('edit',table='puppy',index=puppy_id)
 	else:
 		output += '<p><em>Someone adopted me! I have a home now!</em></p>'
 	
@@ -144,7 +189,7 @@ def shelter(shelter_id):
 	# get the puppy and associated profile
 	shelter = session.query(Shelter).filter_by(id=shelter_id).first()
 	output = '<h2>%s</h2>\
-			   <p>%s<br>%s, %s %s<br><a href="http://%s">%s</a></p>'%(shelter.name, shelter.address, shelter.city, shelter.state, shelter.zipCode, shelter.website, shelter.website)
+			   <p>%s<br>%s, %s %s<br><a href="%s">%s</a></p>'%(shelter.name, shelter.address, shelter.city, shelter.state, shelter.zipCode, shelter.website, shelter.website)
 	return render_template('main.php', login=logged_in, content=output)
 
 
@@ -219,38 +264,39 @@ def add (table):
 	# check which table user is adding to, then build form for that table
 	if table == 'shelter':
 		output += '<h2>Add one shelter!</h2>'
-		output += 'Name: <input type="text" name="name"><br>\
-		Address: <input type="text" name="address"><br>\
-		City: <input type="text" name="city"><br>\
-		Zip: <input type="text" name="zipcode"><br>\
-		State: <input type="text" name="state"><br>\
-		Website: <input type="text" name="website"><br>\
-		Capacity: <input type="text" name="capacity"><br>'
+		output += '<p>Name: <input type="text" name="name"></p>\
+		<p>Address: <input type="text" name="address"></p>\
+		<p>City: <input type="text" name="city"></p>\
+		<p>Zip: <input type="text" name="zipcode"></p>\
+		<p>State: <input type="text" name="state"></p>\
+		<p>Website: <input type="text" name="website"></p>\
+		<p>Capacity: <input type="text" name="capacity"></p>'
 
 	elif table == 'adopter':
 		output += '<h2>Become an adopter!</h2>'
-		output += 'User: <input type="text" name="name"><br>'
-		output += 'Address: <input type="text" name="address"><br>'
-		output += 'City: <input type="text" name="city"><br>'
-		output += 'State: <input type="text" name="state"><br>'
-		output += 'Zip: <input type="text" name="zipcode"><br>'
-		output += 'Website: <input type="text" name="website"><br>'
-		output += 'Email: <input type="text" name="email"><br>'
-		output += 'Password: <input type="text" name="pwd"><br>'
+		output += '<p>User: <input type="text" name="name"></p>'
+		output += '<p>Address: <input type="text" name="address"></p>'
+		output += '<p>City: <input type="text" name="city"></p>'
+		output += '<p>State: <input type="text" name="state"></p>'
+		output += '<p>Zip: <input type="text" name="zipcode"></p>'
+		output += '<p>Website: <input type="text" name="website"></p>'
+		output += '<p>Email: <input type="text" name="email"></p>'
+		output += '<p>Password: <input type="text" name="pwd"></p>'
 
 	elif table == 'puppy':
 		output += '<h2>Add one puppy!</h2>'
-		output += '<p>Name: <input type="text" name="name"><br>\
-		Breed: <input type="text" name="breed"><br>\
-		Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female"> F<br>\
-		Weight: <input type="text" name="weight"><br>\
-		Date of birth: <input type="text" name="dateOfBirth"><br>\
-		Picture: <input type="text" name="picture"></p>\
-		Choose a Home Shelter for this puppy: <br>'
+		output += '<p>Name: <input type="text" name="name"></p>\
+		<p>Breed: <input type="text" name="breed"></p>\
+		<p>Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female"> F</p>\
+		<p>Weight: <input type="text" name="weight"></p>\
+		<p>Date of birth: <input type="text" name="dateOfBirth"></p>\
+		<p>Picture: <input type="text" name="picture"></p>\
+		<p>Choose a Home Shelter for this puppy: <br>'
 		# radio button select from existing shelters
 		shelters = session.query(Shelter).all()
 		for s in shelters:
 			output += '<input type="radio" name="shelterID" value="%s"> %s<br>'%(s.id, s.name)
+		output += '</p>'
 
 	# found no such table for this url var
 	else:
@@ -333,44 +379,44 @@ def edit (table, index):
 		# read and display data for this shelter
 		s = session.query(Shelter).filter_by(id=index)[0]
 		output += '<h2>Edit this shelter!</h2>'
-		output += 'Name: <input type="text" name="name" value="%s"><br>\
-		Address: <input type="text" name="address" value="%s"><br>\
-		City: <input type="text" name="city" value="%s"><br>\
-		Zip: <input type="text" name="zipcode" value="%s"><br>\
-		State: <input type="text" name="state" value="%s"><br>\
-		Website: <input type="text" name="website" value="%s"><br>\
-		Capacity: <input type="text" name="capacity" value="%s"><br>'%(s.name,s.address,s.city,s.zipCode,s.state,s.website,s.capacity)
+		output += '<p>Name: <input type="text" name="name" value="%s"></p>\
+		<p>Address: <input type="text" name="address" value="%s"></p>\
+		<p>City: <input type="text" name="city" value="%s"></p>\
+		<p>Zip: <input type="text" name="zipcode" value="%s"></p>\
+		<p>State: <input type="text" name="state" value="%s"></p>\
+		<p>Website: <input type="text" name="website" value="%s"></p>\
+		<p>Capacity: <input type="text" name="capacity" value="%s"></p>'%(s.name,s.address,s.city,s.zipCode,s.state,s.website,s.capacity)
 
 	# read and display data for this adopter
 	elif table == 'adopter':
 		a = session.query(Adopter).filter_by(id=index)[0]
 		output += '<h2>Edit this adopter!</h2>'
-		output += 'Name: <input type="text" name="name" value="%s"><br>\
-				   Address: <input type="text" name="address" value="%s"><br>\
-				   City: <input type="text" name="city" value="%s"><br>\
-				   State: <input type="text" name="state" value="%s"><br>\
-				   Zip: <input type="text" name="zipcode" value="%s"><br>\
-				   Email: <input type="text" name="email" value="%s"><br>\
-				   Website: <input type="text" name="website" value="%s"><br>\
-				   Password: <input type="text" name="password"><br>'%(a.name, a.address, a.city, a.state, a.zipCode, a.email, a.website)
+		output += '<p>Name: <input type="text" name="name" value="%s"><br>\
+				   <p>Address: <input type="text" name="address" value="%s"><br>\
+				   <p>City: <input type="text" name="city" value="%s"><br>\
+				   <p>State: <input type="text" name="state" value="%s"><br>\
+				   <p>Zip: <input type="text" name="zipcode" value="%s"><br>\
+				   <p>Email: <input type="text" name="email" value="%s"><br>\
+				   <p>Website: <input type="text" name="website" value="%s"><br>\
+				   <p>Password: <input type="text" name="password"><br>'%(a.name, a.address, a.city, a.state, a.zipCode, a.email, a.website)
 	
 	# read and display puppy and profile info
 	elif table == 'puppy':
 		p = session.query(Puppy).filter_by(id=index)[0]
 		q = session.query(Profile).filter_by(id=index)[0]
 		output += '<h2>Edit this puppy!</h2>'
-		output += '<p>Name: <input type="text" name="name" value="%s"><br>\
-		Breed: <input type="text" name="breed" value="%s"><br>'%(p.name,q.breed)
+		output += '<p>Name: <input type="text" name="name" value="%s"></p>\
+		<p>Breed: <input type="text" name="breed" value="%s"></p>'%(p.name,q.breed)
 		# set the radio button for current profile gender as selected
 		if (q.gender == 'male'):
-			output += 'Gender: <input type="radio" name="gender" value="male" checked> M <input type="radio" name="gender" value="female"> F<br>'
+			output += '<p>Gender: <input type="radio" name="gender" value="male" checked> M <input type="radio" name="gender" value="female"> F</p>'
 		else:
-			output += 'Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female" checked> F<br>'
+			output += '<p>Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female" checked> F</p>'
 		# read and display profile
-		output += 'Weight: <input type="text" name="weight" value="%s"><br>\
-		Date of birth: <input type="text" name="dateOfBirth" value="%s"><br>\
-		Picture: <input type="text" name="picture" value="%s"></p>\
-		Choose a Home Shelter for this puppy: <br>'%(q.weight,q.dateOfBirth,q.picture)
+		output += '<p>Weight: <input type="text" name="weight" value="%s"></p>\
+		<p>Date of birth: <input type="text" name="dateOfBirth" value="%s"></p>\
+		<p>Picture: <input type="text" name="picture" value="%s"></p>\
+		<p>Choose a Home Shelter for this puppy: <br>'%(q.weight,q.dateOfBirth,q.picture)
 		# select from existing shelters
 		shelters = session.query(Shelter).all()
 		for s in shelters:
@@ -379,6 +425,7 @@ def edit (table, index):
 			else:
 				output += '<input type="radio" name="shelterID" value="%s">'%s.id
 			output += ' &nbsp;%s<br>'%s.name
+		output += '</p>'
 
 	# found no table for this url variable - return home instead
 	else:
