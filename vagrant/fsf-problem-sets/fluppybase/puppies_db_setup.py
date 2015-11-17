@@ -131,7 +131,7 @@ class Profile (Base):
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
-engine = create_engine('sqlite:///puppies.db')
+engine = create_engine('sqlite:///fluppybase/puppies.db')
 
 # go into db, add classes created as new tables in db #
 Base.metadata.create_all(engine)

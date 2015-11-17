@@ -1,6 +1,10 @@
+# cross-import from Flask app started in __init__.py
+# following Simple Packages convention:
+# http://flask.pocoo.org/docs/0.10/patterns/packages/#simple-packages
+from fluppybase import app
+
 # basic flask stuff
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-app = Flask (__name__)
+from flask import render_template, request, redirect, url_for, flash, jsonify
 
 import math
 
@@ -13,13 +17,14 @@ from puppies_db_setup import get_occupancy, set_occupancy, set_capacity, check_i
 
 # setup connection for restaurant db
 from puppies_db_setup import Base,Shelter,Puppy,Adopter,Profile
-engine = create_engine ('sqlite:///puppies.db')
+engine = create_engine ('sqlite:///fluppybase/puppies.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # session-wide adopter id and name
 logged_in = ['unknown','Login']
+
 
 # visit root
 @app.route('/')
@@ -541,10 +546,11 @@ def adoptersJSON():
 
 
 # run if this is app but not if imported as module
-if __name__ == '__main__':
+#if __name__ == '__main__':
+if __name__ == 'fluppybase.views':
 	# reload server every time notice code change
-	app.debug = True
+	#app.debug = True
 	# session secret key for message flashing
 	app.secret_key = 'super_secret_key'
 	# for accessing and running on vagrant
-	app.run(host = '0.0.0.0', port = 5000)
+	app.run(host = '0.0.0.0', port = 8000)

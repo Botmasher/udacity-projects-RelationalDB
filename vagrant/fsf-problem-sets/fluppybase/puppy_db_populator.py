@@ -8,7 +8,7 @@ import datetime
 import random
 
 
-engine = create_engine('sqlite:///puppies.db')
+engine = create_engine('sqlite:///fluppybase/puppies.db')
 
 Base.metadata.bind = engine
  
