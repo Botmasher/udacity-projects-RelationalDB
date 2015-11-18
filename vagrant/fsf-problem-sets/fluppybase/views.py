@@ -6,6 +6,9 @@ from fluppybase import app
 # basic flask stuff
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
+# my form.py file that builds the page's forms using WTForms
+import forms
+
 import math
 
 # sqlalchemy stuff
@@ -35,27 +38,55 @@ def homePage():
 # simple login routine
 @app.route('/login/<login_id>/', methods=['GET','POST'])
 def login(login_id):
-	if request.method == 'POST':
+
+ # 	  form = RegistrationForm(request.form)
+ #    if request.method == 'POST' and form.validate():
+ #        user = User(form.username.data, form.email.data,
+ #                    form.password.data)
+ #        db_session.add(user)
+ #        flash('Thanks for registering')
+ #        return redirect(url_for('login'))
+ #    return render_template('register.html', form=form)
+	form = LoginForm (request.form)
+	if request.method == 'POST' and form.validate():
 		# if new user, prompt to create a profile
 		try:
-			user = session.query(Adopter).filter_by(name=request.form['name'],password=request.form['pwd'])[0]
+			user = session.query(Adopter).filter_by(name=form.username.data,password=form.password.data)[0]
 		except:
 			return redirect (url_for('add', table='adopter'))
 		logged_in[0] = user.id
 		logged_in[1] = user.name
+		flash ('Thanks for signing in!')
 		return redirect (url_for('homePage'))
 
 	# if not logged in, check for username and password
 	if login_id == 'unknown':
-		output = '<form action="" method="POST">'
-		output += '<p><input type="text" name="name" placeholder="Username"></p>'
-		output += '<p><input type="text" name="pwd" placeholder="password"></p>'
-		output += '<p><input type="submit" value="Login"> / <a href="%s">new user</a></p>'%(url_for('add',table='adopter'))
-		output += '</form>'
-		return render_template('main.php', login=logged_in, content=output)
+		return render_template('form.php', form=form, login=logged_in, content=output)
 	# if logged in, click name to update your profile
 	else:
 		return redirect (url_for('adopter',adopter_id=login_id))
+
+	# if request.method == 'POST':
+	# 	# if new user, prompt to create a profile
+	# 	try:
+	# 		user = session.query(Adopter).filter_by(name=request.form['name'],password=request.form['pwd'])[0]
+	# 	except:
+	# 		return redirect (url_for('add', table='adopter'))
+	# 	logged_in[0] = user.id
+	# 	logged_in[1] = user.name
+	# 	return redirect (url_for('homePage'))
+
+	# # if not logged in, check for username and password
+	# if login_id == 'unknown':
+	# 	output =  '<form action="" method="POST">'
+	# 	output += '<p><input type="text" name="name" placeholder="Username"></p>'
+	# 	output += '<p><input type="text" name="pwd" placeholder="password"></p>'
+	# 	output += '<p><input type="submit" value="Login"> / <a href="%s">new user</a></p>'%(url_for('add',table='adopter'))
+	# 	output += '</form>'
+	# 	return render_template('main.php', login=logged_in, content=output)
+	# # if logged in, click name to update your profile
+	# else:
+	# 	return redirect (url_for('adopter',adopter_id=login_id))
 
 
 # browse all puppies
@@ -552,5 +583,6 @@ if __name__ == 'fluppybase.views':
 	#app.debug = True
 	# session secret key for message flashing
 	app.secret_key = 'super_secret_key'
+	WTF_CSRF_ENABLED = True
 	# for accessing and running on vagrant
 	app.run(host = '0.0.0.0', port = 8000)
