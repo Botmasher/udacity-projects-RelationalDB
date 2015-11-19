@@ -6,7 +6,7 @@ from fluppybase import app
 # basic flask stuff
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-# my form.py file that builds the page's forms using WTForms
+# my forms.py file that builds the page's forms using WTForms
 import forms
 
 import math
@@ -28,6 +28,18 @@ session = DBSession()
 # session-wide adopter id and name
 logged_in = ['unknown','Login']
 
+
+from wtforms import Form, BooleanField, TextField, PasswordField, validators
+
+class LoginForm(Form):
+    username = TextField('Username', [validators.Length(min=4, max=25)])
+    email = TextField('Email Address', [validators.Length(min=6, max=35)])
+    password = PasswordField('Password', [
+        validators.Required()#,
+    #    validators.EqualTo('confirm', message='Passwords must match')
+    ])
+    #confirm = PasswordField('Repeat Password')
+    accept_tos = BooleanField('I accept the TOS', [validators.Required()])
 
 # visit root
 @app.route('/')
@@ -61,7 +73,7 @@ def login(login_id):
 
 	# if not logged in, check for username and password
 	if login_id == 'unknown':
-		return render_template('form.php', form=form, login=logged_in, content=output)
+		return render_template('form.php', form=form, login=logged_in, content='')
 	# if logged in, click name to update your profile
 	else:
 		return redirect (url_for('adopter',adopter_id=login_id))
@@ -578,11 +590,10 @@ def adoptersJSON():
 
 # run if this is app but not if imported as module
 #if __name__ == '__main__':
-if __name__ == 'fluppybase.views':
-	# reload server every time notice code change
-	#app.debug = True
-	# session secret key for message flashing
-	app.secret_key = 'super_secret_key'
-	WTF_CSRF_ENABLED = True
-	# for accessing and running on vagrant
-	app.run(host = '0.0.0.0', port = 8000)
+#if __name__ == 'fluppybase.views':
+# 	# reload server every time notice code change
+# 	app.debug = True
+# 	# session secret key for message flashing
+# 	app.secret_key = 'super_secret_key'
+# 	# for accessing and running on vagrant
+# 	app.run(host = '0.0.0.0', port = 8000)
