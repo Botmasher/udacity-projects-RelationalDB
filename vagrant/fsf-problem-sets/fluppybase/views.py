@@ -6,8 +6,8 @@ from fluppybase import app
 # basic flask stuff
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-# my forms.py file that builds the page's forms using WTForms
-import forms
+# get my WTForms classes from forms.py file
+from forms import LoginForm, AdopterForm
 
 import math
 
@@ -29,18 +29,6 @@ session = DBSession()
 logged_in = ['unknown','Login']
 
 
-from wtforms import Form, BooleanField, TextField, PasswordField, validators
-
-class LoginForm(Form):
-    username = TextField('Username', [validators.Length(min=4, max=25)])
-    email = TextField('Email Address', [validators.Length(min=6, max=35)])
-    password = PasswordField('Password', [
-        validators.Required()#,
-    #    validators.EqualTo('confirm', message='Passwords must match')
-    ])
-    #confirm = PasswordField('Repeat Password')
-    accept_tos = BooleanField('I accept the TOS', [validators.Required()])
-
 # visit root
 @app.route('/')
 def homePage():
@@ -50,22 +38,16 @@ def homePage():
 # simple login routine
 @app.route('/login/<login_id>/', methods=['GET','POST'])
 def login(login_id):
-
- # 	  form = RegistrationForm(request.form)
- #    if request.method == 'POST' and form.validate():
- #        user = User(form.username.data, form.email.data,
- #                    form.password.data)
- #        db_session.add(user)
- #        flash('Thanks for registering')
- #        return redirect(url_for('login'))
- #    return render_template('register.html', form=form)
+	# create form instance of forms.py class
 	form = LoginForm (request.form)
+
 	if request.method == 'POST' and form.validate():
 		# if new user, prompt to create a profile
 		try:
 			user = session.query(Adopter).filter_by(name=form.username.data,password=form.password.data)[0]
 		except:
 			return redirect (url_for('add', table='adopter'))
+		# sign in returning user
 		logged_in[0] = user.id
 		logged_in[1] = user.name
 		flash ('Thanks for signing in!')
@@ -73,7 +55,8 @@ def login(login_id):
 
 	# if not logged in, check for username and password
 	if login_id == 'unknown':
-		return render_template('form.php', form=form, login=logged_in, content='')
+		content = '<a href="%s">become an adopter</a>'%(url_for('add', table='adopter'))
+		return render_template('form.php', form=form, login=logged_in, content=content)
 	# if logged in, click name to update your profile
 	else:
 		return redirect (url_for('adopter',adopter_id=login_id))
@@ -267,7 +250,20 @@ def adopter(adopter_id):
 @app.route('/add/<table>/', methods=['GET','POST'])
 def add (table):
 
-	if request.method=='POST':
+	form = AdopterForm(request.form)
+
+	if request.method == 'POST' and form.validate():
+
+		if table == 'adopter':
+			print ('adding 1 new adopter!!!!')
+			new_row = Adopter (name=form.username.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, email=form.email.data, password=form.password.data)
+			flash ("Thank you for creating an Adopter profile!")
+
+		session.add (new_row)
+		session.commit()
+		return redirect (url_for('homePage'))
+
+	elif request.method=='POST':
 
 		# check if any input fields are empty - send user back to this page
 		for i in request.form:
@@ -321,15 +317,16 @@ def add (table):
 		<p>Capacity: <input type="text" name="capacity"></p>'
 
 	elif table == 'adopter':
-		output += '<h2>Become an adopter!</h2>'
-		output += '<p>User: <input type="text" name="name"></p>'
-		output += '<p>Address: <input type="text" name="address"></p>'
-		output += '<p>City: <input type="text" name="city"></p>'
-		output += '<p>State: <input type="text" name="state"></p>'
-		output += '<p>Zip: <input type="text" name="zipcode"></p>'
-		output += '<p>Website: <input type="text" name="website"></p>'
-		output += '<p>Email: <input type="text" name="email"></p>'
-		output += '<p>Password: <input type="text" name="pwd"></p>'
+		return render_template('form.php', form=form, login=logged_in, content='')
+		# output += '<h2>Become an adopter!</h2>'
+		# output += '<p>User: <input type="text" name="name"></p>'
+		# output += '<p>Address: <input type="text" name="address"></p>'
+		# output += '<p>City: <input type="text" name="city"></p>'
+		# output += '<p>State: <input type="text" name="state"></p>'
+		# output += '<p>Zip: <input type="text" name="zipcode"></p>'
+		# output += '<p>Website: <input type="text" name="website"></p>'
+		# output += '<p>Email: <input type="text" name="email"></p>'
+		# output += '<p>Password: <input type="text" name="pwd"></p>'
 
 	elif table == 'puppy':
 		output += '<h2>Add one puppy!</h2>'

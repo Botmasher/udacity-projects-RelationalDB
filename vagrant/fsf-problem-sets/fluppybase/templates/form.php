@@ -46,13 +46,15 @@
 			{% from "_formhelpers.html" import render_field %}
 			<form method="POST" action="">
 			  <dl>
-			    {{ render_field(form.username) }}
-			    {{ render_field(form.email) }}
-			    {{ render_field(form.password) }}
-			    {{ render_field(form.accept_tos) }}
+			  	{% for i in form %}
+			    	{{ render_field(i) }}
+			    {% endfor %}
 			  </dl>
-			  <p><input type="submit" value="Register"></p>
+			  <p><input type="submit" value="Submit"></p>
 			</form>
+
+			<p>{{ content }}</p>
+
 		</section>
 
 		<!-- bottom of page -->
