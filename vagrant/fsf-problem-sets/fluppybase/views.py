@@ -18,7 +18,7 @@ from sqlalchemy.orm import sessionmaker
 # shelter balancing functions
 from puppies_db_setup import get_occupancy, set_occupancy, set_capacity, check_in, curate_shelter_capacity, distribute_puppies
 
-# setup connection for restaurant db
+# setup connection for db
 from puppies_db_setup import Base,Shelter,Puppy,Adopter,Profile
 engine = create_engine ('sqlite:///fluppybase/puppies.db')
 Base.metadata.bind = engine
@@ -253,9 +253,10 @@ def add (table):
 	if table == 'adopter':
 		form = AdopterForm(request.form)
 	elif table == 'puppy':
-		form = PuppyForm(request.form)
+		shelters = session.query(Shelter).all()
+		form = PuppyForm (request.form, shelters)
 	else:
-		form = PuppyForm(request.form)
+		form = AdopterForm(request.form)
 
 	if request.method == 'POST' and form.validate():
 

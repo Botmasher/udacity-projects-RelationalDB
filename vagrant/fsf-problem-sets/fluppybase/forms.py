@@ -1,4 +1,18 @@
-from wtforms import Form, BooleanField, TextField, PasswordField, validators
+# sqlalchemy stuff
+from sqlalchemy import create_engine, func, distinct
+from sqlalchemy.orm import sessionmaker
+
+# shelter balancing functions
+from puppies_db_setup import get_occupancy, set_occupancy, set_capacity, check_in, curate_shelter_capacity, distribute_puppies
+
+# setup connection for db
+from puppies_db_setup import Base,Shelter,Puppy,Adopter,Profile
+engine = create_engine ('sqlite:///fluppybase/puppies.db')
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
+
+from wtforms import Form, BooleanField, TextField, RadioField, PasswordField, validators
 
 class LoginForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
@@ -21,13 +35,16 @@ class AdopterForm(Form):
     accept_tos = BooleanField('I accept the TOS', [validators.Required()])
 
 class PuppyForm(Form):
-    name = TextField('Name', [validators.Length(min=4, max=25)])
-    breed = TextField('Breed', [validators.Length(min=6, max=50)])
-    gender = TextField('Gender', [validators.Length(min=2, max=35)])
-    weight = TextField('Weight', [validators.Length(min=2, max=35)])
-    dateOfBirth = TextField('Birthdate', [validators.Length(min=2, max=2)])
-    picture = TextField('Photo', [validators.Length(min=6, max=50)])
-    shelter = TextField('Shelter', [validators.Length(min=6, max=35)])
+	shelters = session.query(Shelter).all()
+	name = TextField('Name', [validators.Length(min=4, max=25)])
+	breed = TextField('Breed', [validators.Length(min=6, max=50)])
+	gender = TextField('Gender', [validators.Length(min=2, max=35)])
+	weight = TextField('Weight', [validators.Length(min=2, max=35)])
+	dateOfBirth = TextField('Birthdate', [validators.Length(min=2, max=2)])
+	picture = TextField('Photo', [validators.Length(min=6, max=50)])
+	shelter = TextField('TestShelterTextBox', [validators.Length(min=6, max=35)])
+	shelter_id = RadioField('Shelter', [validators.Required()], choices=[('%s'%s.id,'%s'%s.name) for s in shelters],
+    	default='1')
 
 	# # check which table user is adding to, then build form for that table
 	# if table == 'shelter':
