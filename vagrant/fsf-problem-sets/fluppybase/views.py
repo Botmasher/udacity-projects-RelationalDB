@@ -7,7 +7,7 @@ from fluppybase import app
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
 # get my WTForms classes from forms.py file
-from forms import LoginForm, AdopterForm
+from forms import LoginForm, AdopterForm, PuppyForm
 
 import math
 
@@ -250,17 +250,36 @@ def adopter(adopter_id):
 @app.route('/add/<table>/', methods=['GET','POST'])
 def add (table):
 
-	form = AdopterForm(request.form)
+	if table == 'adopter':
+		form = AdopterForm(request.form)
+	elif table == 'puppy':
+		form = PuppyForm(request.form)
+	else:
+		form = PuppyForm(request.form)
 
 	if request.method == 'POST' and form.validate():
 
 		if table == 'adopter':
-			print ('adding 1 new adopter!!!!')
 			new_row = Adopter (name=form.username.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, email=form.email.data, password=form.password.data)
-			flash ("Thank you for creating an Adopter profile!")
+			flash ('Thank you for creating an Adopter profile!')
 
+		elif table == 'puppy':
+			# try checking puppy in to shelter if shelter not full
+			new_row = Puppy (name=form.name.data, shelter_id=form.shelter.data)
+			if session.query(Shelter).filter_by(id=new_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=new_row.shelter_id)[0].capacity:
+				# HOMELESS! - we can't place the puppy!
+				new_row.shelter_id = None
+				flash("Unable to place puppy - currently has no home shelter!")
+			# create profile entry for this puppy too
+			new_profile = Profile (puppy_id=new_row.id, breed=form.breed.data, gender=form.gender.data, weight=form.weight.data, picture=form.picture.data)
+			session.add (new_profile)
+			flash ('Thank you for adding a puppy!')
+
+		# add created row to db
 		session.add (new_row)
 		session.commit()
+		# update shelter totals
+		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
 
 	elif request.method=='POST':
@@ -329,19 +348,20 @@ def add (table):
 		# output += '<p>Password: <input type="text" name="pwd"></p>'
 
 	elif table == 'puppy':
-		output += '<h2>Add one puppy!</h2>'
-		output += '<p>Name: <input type="text" name="name"></p>\
-		<p>Breed: <input type="text" name="breed"></p>\
-		<p>Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female"> F</p>\
-		<p>Weight: <input type="text" name="weight"></p>\
-		<p>Date of birth: <input type="text" name="dateOfBirth"></p>\
-		<p>Picture: <input type="text" name="picture"></p>\
-		<p>Choose a Home Shelter for this puppy: <br>'
-		# radio button select from existing shelters
-		shelters = session.query(Shelter).all()
-		for s in shelters:
-			output += '<input type="radio" name="shelterID" value="%s"> %s<br>'%(s.id, s.name)
-		output += '</p>'
+		return render_template('form.php', form=form, login=logged_in, content='')
+		# output += '<h2>Add one puppy!</h2>'
+		# output += '<p>Name: <input type="text" name="name"></p>\
+		# <p>Breed: <input type="text" name="breed"></p>\
+		# <p>Gender: <input type="radio" name="gender" value="male"> M <input type="radio" name="gender" value="female"> F</p>\
+		# <p>Weight: <input type="text" name="weight"></p>\
+		# <p>Date of birth: <input type="text" name="dateOfBirth"></p>\
+		# <p>Picture: <input type="text" name="picture"></p>\
+		# <p>Choose a Home Shelter for this puppy: <br>'
+		# # radio button select from existing shelters
+		# shelters = session.query(Shelter).all()
+		# for s in shelters:
+		# 	output += '<input type="radio" name="shelterID" value="%s"> %s<br>'%(s.id, s.name)
+		# output += '</p>'
 
 	# found no such table for this url var
 	else:

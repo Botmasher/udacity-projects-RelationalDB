@@ -4,6 +4,7 @@ class LoginForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
     password = PasswordField('Password', [validators.Required()])
 
+
 class AdopterForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
     address = TextField('Address', [validators.Length(min=6, max=50)])
@@ -18,6 +19,15 @@ class AdopterForm(Form):
     ])
     confirm = PasswordField('Repeat Password')
     accept_tos = BooleanField('I accept the TOS', [validators.Required()])
+
+class PuppyForm(Form):
+    name = TextField('Name', [validators.Length(min=4, max=25)])
+    breed = TextField('Breed', [validators.Length(min=6, max=50)])
+    gender = TextField('Gender', [validators.Length(min=2, max=35)])
+    weight = TextField('Weight', [validators.Length(min=2, max=35)])
+    dateOfBirth = TextField('Birthdate', [validators.Length(min=2, max=2)])
+    picture = TextField('Photo', [validators.Length(min=6, max=50)])
+    shelter = TextField('Shelter', [validators.Length(min=6, max=35)])
 
 	# # check which table user is adding to, then build form for that table
 	# if table == 'shelter':
