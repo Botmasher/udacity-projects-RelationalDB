@@ -7,12 +7,12 @@ from fluppybase import app
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
 # get my WTForms classes from forms.py file
-from forms import LoginForm, AdopterForm, PuppyForm
+from forms import LoginForm, AdopterForm, PuppyForm, ShelterForm
 
 import math
 
 # sqlalchemy stuff
-from sqlalchemy import create_engine, func, distinct
+from sqlalchemy import create_engine, func, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
 
 # shelter balancing functions
@@ -254,9 +254,11 @@ def add (table):
 		form = AdopterForm(request.form)
 	elif table == 'puppy':
 		shelters = session.query(Shelter).all()
-		form = PuppyForm (request.form, shelters)
+		form = PuppyForm (request.form)
+	elif table == 'shelter':
+		form = ShelterForm (request.form)
 	else:
-		form = AdopterForm(request.form)
+		pass
 
 	if request.method == 'POST' and form.validate():
 
@@ -275,6 +277,10 @@ def add (table):
 			new_profile = Profile (puppy_id=new_row.id, breed=form.breed.data, gender=form.gender.data, weight=form.weight.data, picture=form.picture.data)
 			session.add (new_profile)
 			flash ('Thank you for adding a puppy!')
+
+		elif table == 'shelter':
+			new_row = Shelter (name=form.name.data, address=form.address.data, zipCode=form.zipCode.data, city=form.city.data, state=form.state.data, website=form.website.data, capacity=form.capacity.data)
+			flash ('Thank you for adding a shelter!')
 
 		# add created row to db
 		session.add (new_row)
@@ -323,18 +329,19 @@ def add (table):
 		return redirect (url_for('homePage'))
 
 	# if method is GET display form for user input
-	output = '<form action="" method="POST">'
+	#output = '<form action="" method="POST">'
 	
 	# check which table user is adding to, then build form for that table
 	if table == 'shelter':
-		output += '<h2>Add one shelter!</h2>'
-		output += '<p>Name: <input type="text" name="name"></p>\
-		<p>Address: <input type="text" name="address"></p>\
-		<p>City: <input type="text" name="city"></p>\
-		<p>Zip: <input type="text" name="zipcode"></p>\
-		<p>State: <input type="text" name="state"></p>\
-		<p>Website: <input type="text" name="website"></p>\
-		<p>Capacity: <input type="text" name="capacity"></p>'
+		return render_template('form.php', form=form, login=logged_in, content='')
+		# output += '<h2>Add one shelter!</h2>'
+		# output += '<p>Name: <input type="text" name="name"></p>\
+		# <p>Address: <input type="text" name="address"></p>\
+		# <p>City: <input type="text" name="city"></p>\
+		# <p>Zip: <input type="text" name="zipcode"></p>\
+		# <p>State: <input type="text" name="state"></p>\
+		# <p>Website: <input type="text" name="website"></p>\
+		# <p>Capacity: <input type="text" name="capacity"></p>'
 
 	elif table == 'adopter':
 		return render_template('form.php', form=form, login=logged_in, content='')
@@ -349,6 +356,9 @@ def add (table):
 		# output += '<p>Password: <input type="text" name="pwd"></p>'
 
 	elif table == 'puppy':
+		# set shelter_id radio buttons to a specific button (here the second shelter)
+		form.shelter_id.data='%s'%session.query(Shelter).order_by(asc(Shelter.id))[1].id
+		# render the form
 		return render_template('form.php', form=form, login=logged_in, content='')
 		# output += '<h2>Add one puppy!</h2>'
 		# output += '<p>Name: <input type="text" name="name"></p>\
@@ -369,9 +379,9 @@ def add (table):
 		return redirect (url_for ('homePage'))
 	
 	# end form and page - submit to reach POST branch above
-	output += '<p><input type="submit" value="Add"></p></form>'
+	#output += '<p><input type="submit" value="Add"></p></form>'
 
-	return render_template('main.php', login=logged_in, content=output)
+	#return render_template('main.php', login=logged_in, content=output)
 
 
 # update a puppy, shelter or adopter in a table
