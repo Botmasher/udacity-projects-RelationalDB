@@ -250,6 +250,7 @@ def adopter(adopter_id):
 @app.route('/add/<table>/', methods=['GET','POST'])
 def add (table):
 
+	# retrieve form class for this URL keyword
 	if table == 'adopter':
 		form = AdopterForm(request.form)
 	elif table == 'puppy':
@@ -258,8 +259,10 @@ def add (table):
 	elif table == 'shelter':
 		form = ShelterForm (request.form)
 	else:
-		pass
+		flash ('This isn\'t the /add/ you are looking for! We don\'t recognize that URL. Please try adding a /puppy, /shelter or /adopter.')
+		return redirect (url_for('homePage'))
 
+	# add to database on form submission
 	if request.method == 'POST' and form.validate():
 
 		if table == 'adopter':
@@ -282,6 +285,10 @@ def add (table):
 			new_row = Shelter (name=form.name.data, address=form.address.data, zipCode=form.zipCode.data, city=form.city.data, state=form.state.data, website=form.website.data, capacity=form.capacity.data)
 			flash ('Thank you for adding a shelter!')
 
+		else:
+			flash ('Unable to add your info to FluppyBase (*whimper*). Don\'t leave yet! Please check that the form is completely filled out.')
+			return redirect (url_for ('add', table=table))
+
 		# add created row to db
 		session.add (new_row)
 		session.commit()
@@ -289,44 +296,44 @@ def add (table):
 		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
 
-	elif request.method=='POST':
+	# elif request.method=='POST':
 
-		# check if any input fields are empty - send user back to this page
-		for i in request.form:
-			if request.form[i] == '' or request.form[i] == None:
-				return redirect (url_for ('add', table=table))
+	# 	# check if any input fields are empty - send user back to this page
+	# 	for i in request.form:
+	# 		if request.form[i] == '' or request.form[i] == None:
+	# 			return redirect (url_for ('add', table=table))
 
-		# add row to shelter table
-		if table == 'shelter':
-			new_row = Shelter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], capacity=request.form['capacity'])
+	# 	# add row to shelter table
+	# 	if table == 'shelter':
+	# 		new_row = Shelter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], capacity=request.form['capacity'])
 		
-		# add row to adopter table
-		elif table == 'adopter':
-			new_row = Adopter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], email=request.form['email'], password=request.form['pwd'])
+	# 	# add row to adopter table
+	# 	elif table == 'adopter':
+	# 		new_row = Adopter (name=request.form['name'], address=request.form['address'], city=request.form['city'], zipCode=request.form['zipcode'], state=request.form['state'], website=request.form['website'], email=request.form['email'], password=request.form['pwd'])
 		
-		# add row to puppy table
-		elif table == 'puppy':
-			# try checking puppy in to shelter if shelter not full
-			new_row = Puppy (name=request.form['name'], shelter_id=request.form['shelterID'])
-			if session.query(Shelter).filter_by(id=new_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=new_row.shelter_id)[0].capacity:
-				# HOMELESS! - we can't place the puppy!
-				new_row.shelter_id = None
-				flash("Unable to place puppy - currently has no home shelter!")
-			# create profile entry for this puppy too
-			new_profile = Profile (puppy_id=new_row.id, breed=request.form['breed'], gender=request.form['gender'], weight=request.form['weight'], picture=request.form['picture'])
-			session.add (new_profile)
+	# 	# add row to puppy table
+	# 	elif table == 'puppy':
+	# 		# try checking puppy in to shelter if shelter not full
+	# 		new_row = Puppy (name=request.form['name'], shelter_id=request.form['shelterID'])
+	# 		if session.query(Shelter).filter_by(id=new_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=new_row.shelter_id)[0].capacity:
+	# 			# HOMELESS! - we can't place the puppy!
+	# 			new_row.shelter_id = None
+	# 			flash("Unable to place puppy - currently has no home shelter!")
+	# 		# create profile entry for this puppy too
+	# 		new_profile = Profile (puppy_id=new_row.id, breed=request.form['breed'], gender=request.form['gender'], weight=request.form['weight'], picture=request.form['picture'])
+	# 		session.add (new_profile)
 		
-		# found no table for this url variable
-		else:
-			return redirect (url_for ('homePage'))
+	# 	# found no table for this url variable
+	# 	else:
+	# 		return redirect (url_for ('homePage'))
 
-		# add whichever row was created above to the db
-		session.add (new_row)
-		session.commit()
-		# update shelter totals
-		curate_shelter_capacity()
-		# go home
-		return redirect (url_for('homePage'))
+	# 	# add whichever row was created above to the db
+	# 	session.add (new_row)
+	# 	session.commit()
+	# 	# update shelter totals
+	# 	curate_shelter_capacity()
+	# 	# go home
+	# 	return redirect (url_for('homePage'))
 
 	# if method is GET display form for user input
 	#output = '<form action="" method="POST">'
@@ -388,64 +395,179 @@ def add (table):
 @app.route('/edit/<table>/<int:index>/', methods=['GET','POST'])
 def edit (table, index):
 
-	if request.method=='POST':
+	# retrieve form class from forms.py based on URL keyword
+	if table == 'adopter':
+		form = AdopterForm(request.form)
+	elif table == 'puppy':
+		shelters = session.query(Shelter).all()
+		form = PuppyForm (request.form)
+	elif table == 'shelter':
+		form = ShelterForm (request.form)
+	else:
+		flash ('This isn\'t the /edit/ you are looking for! We don\'t recognize that URL. Please try editing a /puppy, /shelter or /adopter.')
+		return redirect (url_for('homePage'))
 
-		# check if any input fields are empty - send user back to this page
-		for i in request.form:
-			if request.form[i] == '' or request.form[i] == None:
-				return redirect (url_for ('edit', table=table, index=index))
+	# edit database on form submission
+	if request.method == 'POST' and form.validate():
 
-		# add row to shelter table
-		if table == 'shelter':
-			mod_row = session.query(Shelter).filter_by(id=index)[0]
-			mod_row.name = request.form['name']
-			mod_row.address = request.form['address']
-			mod_row.city = request.form['city']
-			mod_row.zipCode = request.form['zipcode']
-			mod_row.state = request.form['state']
-			mod_row.website = request.form['website']
-			mod_row.capacity = request.form['capacity']
-		
-		# add row to adopter table
-		elif table == 'adopter':
+		# your edit URL ends in /adopter/
+		if table == 'adopter':
 			mod_row = session.query(Adopter).filter_by(id=index)[0]
-			mod_row.name = request.form['name']
-			mod_row.address = request.form['address']
-			mod_row.city = request.form['city']
-			mod_row.zipCode = request.form['zipcode']
-			mod_row.state = request.form['state']
-			mod_row.email = request.form['email']
-			mod_row.website = request.form['website']
-			mod_row.password = request.form['password']
-		
-		# add row to puppy table
+			mod_row.name = form.username.data
+			mod_row.address = form.address.data
+			mod_row.city = form.city.data
+			mod_row.state = form.state.data
+			mod_row.zipCode = form.zipCode.data
+			mod_row.website = form.website.data
+			mod_row.email = form.email.data
+			mod_row.password = form.password.data
+			flash ('Your Adopter profile has been updated!')
+
+		# your edit URL ends in /puppy/
 		elif table == 'puppy':
+			# update the puppy name and shelter
 			mod_row = session.query(Puppy).filter_by(id=index)[0]
-			mod_row.name = request.form['name']
-			last_id = mod_row.shelter_id	# store current shelter in case new one is full
-			mod_row.shelter_id = request.form['shelterID']
-			mod_profile = session.query(Profile).filter_by(id=index)[0]
-			mod_profile.breed = request.form['breed']
-			mod_profile.gender = request.form['gender']
-			mod_profile.weight = request.form['weight']
-			mod_profile.picture = request.form['picture']
-			session.add (mod_profile)
-			# catch overflow puppies and unassign from full shelter
+			previous_shelter = mod_row.shelter_id
+			mod_row.name = form.name.data
+			mod_row.shelter_id = form.shelter_id.data
+			# if chosen shelter is full, place puppy back in its current shelter
 			if session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].capacity:
-				# shelter full - move to previous shelter
-				flash("Shelter full! Unable to move puppy - staying in current home shelter!")
-				mod_row.shelter_id = last_id				
+				mod_row.shelter_id = previous_shelter
+				flash("You selected a FULL shelter! Your puppy will stay in the current home shelter.")
+			# update the profile entry for this puppy as well
+			mod_profile = session.query(Profile).filter_by(id=index)[0]
+			mod_profile.puppy_id = index
+			mod_profile.breed = form.breed.data
+			mod_profile.gender = form.gender.data
+			mod_profile.weight = form.weight.data
+			mod_profile.picture = form.picture.data
+			session.add (mod_profile)
+			flash ('Your puppy\'s info has been updated!')
 
-		# found no table corresponding to url var - return home instead
+		# your edit URL ends in /shelter/
+		elif table == 'shelter':
+			mod_row = session.query(Shelter).filter_by(id=index)[0]
+			mod_row.name = form.name.data
+			mod_row.address = form.address.data
+			mod_row.zipCode = form.zipCode.data
+			mod_row.city = form.city.data
+			mod_row.state = form.state.data
+			mod_row.website = form.website.data
+			mod_row.capacity = form.capacity.data
+			flash ('Your shelter\'s info has been updated!')
+
 		else:
-			return redirect(url_for('homePage'))
+			flash ('Unable to add your info to FluppyBase (*whimper*). Don\'t leave yet! Please check that the form is completely filled out.')
+			return redirect (url_for ('edit', table=table, index=index))
 
-		# edit row updated above in the db
+		# update row in the db
 		session.add (mod_row)
 		session.commit()
 		# update shelter totals
 		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
+
+	# check which table user is updating, then build form for that table
+	if table == 'shelter':
+		this_shelter = session.query(Shelter).filter_by(id=index)[0]
+		form.name.data = this_shelter.name
+		form.address.data = this_shelter.address
+		form.city.data = this_shelter.city
+		form.state.data = this_shelter.state
+		form.zipCode.data = this_shelter.zipCode
+		form.website.data = this_shelter.website
+		form.capacity.data = this_shelter.capacity
+		return render_template('form.php', form=form, login=logged_in, content='')
+
+	elif table == 'adopter':
+		this_adopter = session.query(Adopter).filter_by(id=index)[0]
+		form.username.data = this_adopter.name
+		form.address.data = this_adopter.address
+		form.city.data = this_adopter.city
+		form.state.data = this_adopter.state
+		form.zipCode.data = this_adopter.zipCode
+		form.website.data = this_adopter.website
+		form.email.data = this_adopter.email
+		return render_template('form.php', form=form, login=logged_in, content='')
+
+	elif table == 'puppy':
+		# set the default fields
+		this_puppy = session.query(Puppy).filter_by(id=index)[0]
+		this_profile = session.query(Profile).filter_by(id=index)[0]
+		form.name.data = this_puppy.name
+		form.breed.data = this_profile.breed
+		form.gender.data = this_profile.gender
+		form.weight.data = this_profile.weight
+		form.dateOfBirth.data = this_profile.dateOfBirth
+		form.picture.data = this_profile.picture
+		# set shelter_id radio buttons to a specific button (here the second shelter)
+		form.shelter_id.data='%s'%this_puppy.shelter_id
+		# render the form
+		return render_template('form.php', form=form, login=logged_in, content='')
+
+	# found no such table for this url var
+	else:
+		return redirect (url_for ('homePage'))
+
+	# # edit database on form submission
+	# if request.method=='POST':
+
+	# 	# check if any input fields are empty - send user back to this page
+	# 	for i in request.form:
+	# 		if request.form[i] == '' or request.form[i] == None:
+	# 			return redirect (url_for ('edit', table=table, index=index))
+
+	# 	# add row to shelter table
+	# 	if table == 'shelter':
+	# 		mod_row = session.query(Shelter).filter_by(id=index)[0]
+	# 		mod_row.name = request.form['name']
+	# 		mod_row.address = request.form['address']
+	# 		mod_row.city = request.form['city']
+	# 		mod_row.zipCode = request.form['zipcode']
+	# 		mod_row.state = request.form['state']
+	# 		mod_row.website = request.form['website']
+	# 		mod_row.capacity = request.form['capacity']
+		
+	# 	# add row to adopter table
+	# 	elif table == 'adopter':
+	# 		mod_row = session.query(Adopter).filter_by(id=index)[0]
+	# 		mod_row.name = request.form['name']
+	# 		mod_row.address = request.form['address']
+	# 		mod_row.city = request.form['city']
+	# 		mod_row.zipCode = request.form['zipcode']
+	# 		mod_row.state = request.form['state']
+	# 		mod_row.email = request.form['email']
+	# 		mod_row.website = request.form['website']
+	# 		mod_row.password = request.form['password']
+		
+	# 	# add row to puppy table
+	# 	elif table == 'puppy':
+	# 		mod_row = session.query(Puppy).filter_by(id=index)[0]
+	# 		mod_row.name = request.form['name']
+	# 		last_id = mod_row.shelter_id	# store current shelter in case new one is full
+	# 		mod_row.shelter_id = request.form['shelterID']
+	# 		mod_profile = session.query(Profile).filter_by(id=index)[0]
+	# 		mod_profile.breed = request.form['breed']
+	# 		mod_profile.gender = request.form['gender']
+	# 		mod_profile.weight = request.form['weight']
+	# 		mod_profile.picture = request.form['picture']
+	# 		session.add (mod_profile)
+	# 		# catch overflow puppies and unassign from full shelter
+	# 		if session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=mod_row.shelter_id)[0].capacity:
+	# 			# shelter full - move to previous shelter
+	# 			flash("Shelter full! Unable to move puppy - staying in current home shelter!")
+	# 			mod_row.shelter_id = last_id				
+
+	# 	# found no table corresponding to url var - return home instead
+	# 	else:
+	# 		return redirect(url_for('homePage'))
+
+	# 	# edit row updated above in the db
+	# 	session.add (mod_row)
+	# 	session.commit()
+	# 	# update shelter totals
+	# 	curate_shelter_capacity()
+	# 	return redirect (url_for('homePage'))
 
 	# if method is GET display form for user input
 	output = '<form action="" method="POST">'

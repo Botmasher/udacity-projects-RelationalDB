@@ -12,19 +12,22 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# for making forms classes
 from wtforms import Form, BooleanField, TextField, RadioField, PasswordField, validators
 
+
+# Form fields when user clicks to login
 class LoginForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
     password = PasswordField('Password', [validators.Required()])
 
-
+# Form fields when users create or edit their profile
 class AdopterForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
     address = TextField('Address', [validators.Length(min=6, max=50)])
     city = TextField('City', [validators.Length(min=2, max=35)])
-    zipCode = TextField('Zip', [validators.Length(min=2, max=6)])
     state = TextField('State', [validators.Length(min=2, max=2)])
+    zipCode = TextField('Zip', [validators.Length(min=2, max=6)])
     website = TextField('Website', [validators.Length(min=6, max=50)])
     email = TextField('Email Address', [validators.Length(min=6, max=35)])
     password = PasswordField('Password', [
@@ -34,16 +37,18 @@ class AdopterForm(Form):
     confirm = PasswordField('Repeat Password')
     accept_tos = BooleanField('I accept the TOS', [validators.Required()])
 
+# Form fields when user adds or updates a puppy, including selecting its shelter
 class PuppyForm(Form):
 	shelters = session.query(Shelter).all()
 	name = TextField('Name', [validators.Length(min=4, max=25)])
 	breed = TextField('Breed', [validators.Length(min=6, max=25)])
 	gender = TextField('Gender', [validators.Length(min=2, max=10)])
-	weight = TextField('Weight', [validators.Length(min=2, max=4)])
+	weight = TextField('Weight', [validators.Length(min=2, max=25)])
 	dateOfBirth = TextField('Birthdate', [validators.Length(min=2, max=10)])
 	picture = TextField('Photo', [validators.Length(min=6, max=100)])
 	shelter_id = RadioField('Shelter', [validators.Required()], choices=[('%s'%s.id,'%s'%s.name) for s in shelters])
 
+# Form fields when user adds or updates a shelter
 class ShelterForm(Form):
 	shelters = session.query(Shelter).all()
 	name = TextField('Name', [validators.Length(min=4, max=25)])
