@@ -639,28 +639,28 @@ def edit (table, index):
 @app.route('/delete/<table>/<int:index>/', methods=['GET','POST'])
 def delete (table, index):
 
-	if request.method=='POST':
+	# check which table user is deleting from
+	if table == 'shelter':
+		this_entry = session.query(Shelter).filter_by(id=index)[0]
+	elif table == 'adopter':
+		this_entry = session.query(Adopter).filter_by(id=index)[0]
+	elif table == 'puppy':
+		this_entry = session.query(Puppy).filter_by(id=index)[0]
+	# url variable does not relate to a table - return home instead
+	else:
+		return redirect (url_for('homePage'))
 
-		# check if any input fields are empty - send user back to this page
-		for i in request.form:
-			if request.form[i] == '' or request.form[i] == None:
-				return redirect (url_for ('add', table=table))
-
-		# delete row from shelter table
-		if table == 'shelter':
-			this_entry = session.query(Shelter).filter_by(id=index)[0]
-		
-		# delete row from adopter table
-		elif table == 'adopter':
-			this_entry = session.query(Adopter).filter_by(id=index)[0]
-		
-		# delete row from puppy and profile tables
-		elif table == 'puppy':
-			this_entry = session.query(Puppy).filter_by(id=index)[0]
+	if request.method=='POST':		
+		# if deleting puppy, delete row from profile table as well
+		if table == 'puppy':
 			this_profile = session.query(Profile).filter_by(id=index)[0]
 			session.delete (this_profile)
 
-		# url variables matched no table - redirect
+		# if deleting shelter or adopter, continue
+		elif table == 'shelter' or table == 'adopter':
+			pass
+
+		# if url variable matches no table, redirect
 		else:
 			return redirect (url_for ('homePage'))
 
@@ -670,24 +670,12 @@ def delete (table, index):
 		# update shelter totals
 		curate_shelter_capacity()
 		return redirect (url_for('homePage'))
-
-	# if method is GET display form for user to confirm the delete
-	output = '<form action="" method="POST">'
 	
-	# check which table user is deleting from and display warning
-	if table == 'shelter':
-		s = session.query(Shelter).filter_by(id=index)[0]
-		output += '<h2>Are you sure you want to delete %s?</h2>'%(s.name)
-	elif table == 'adopter':
-		a = session.query(Adopter).filter_by(id=index)[0]
-		output += '<h2>Are you sure you want to delete %s?</h2>'%(a.name)
-	elif table == 'puppy':
-		p = session.query(Puppy).filter_by(id=index)[0]
-		output += '<h2>Are you sure you want to delete %s?</h2>'%(p.name)
-	# url variable does not relate to a table - return home instead
-	else:
-		return redirect (url_for('homePage'))
+	# if method is GET display form for user to confirm the delete
+	
 	# end form and page - submit to reach POST branch above
+	output = '<form action="" method="POST">'
+	output += '<h2>Are you sure you want to delete %s?</h2>'%(this_entry.name)
 	output += '<p>This action cannot be undone!</p>\
 			   <p><input type="submit" value="Delete"></p></form>'
 
