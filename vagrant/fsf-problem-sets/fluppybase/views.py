@@ -184,8 +184,10 @@ def puppy(puppy_id):
 		else:
 			adopter = session.query(Adopter).filter_by(id=logged_in[0]).first()
 			adopter.puppy_id = puppy_id
+			puppy = session.query(Puppy).filter_by(id=puppy_id).first()
 			session.commit()
 			flash("Thank you for adopting a puppy! Click your profile to see all your puppies.")
+			app.logger.debug ('%s adopted puppy %s'%(adopter.name, puppy.name))
 		return redirect (url_for('homePage'))
 
 	# get the puppy and associated profile
@@ -271,7 +273,7 @@ def add (table):
 
 		elif table == 'puppy':
 			# try checking puppy in to shelter if shelter not full
-			new_row = Puppy (name=form.name.data, shelter_id=form.shelter.data)
+			new_row = Puppy (name=form.name.data, shelter_id=form.shelter_id.data)
 			if session.query(Shelter).filter_by(id=new_row.shelter_id)[0].occupancy >= session.query(Shelter).filter_by(id=new_row.shelter_id)[0].capacity:
 				# HOMELESS! - we can't place the puppy!
 				new_row.shelter_id = None
@@ -280,6 +282,7 @@ def add (table):
 			new_profile = Profile (puppy_id=new_row.id, breed=form.breed.data, gender=form.gender.data, weight=form.weight.data, picture=form.picture.data)
 			session.add (new_profile)
 			flash ('Thank you for adding a puppy!')
+			app.logger.debug ('Added puppy %s to FluppyBase'%(new_row.name))
 
 		elif table == 'shelter':
 			new_row = Shelter (name=form.name.data, address=form.address.data, zipCode=form.zipCode.data, city=form.city.data, state=form.state.data, website=form.website.data, capacity=form.capacity.data)

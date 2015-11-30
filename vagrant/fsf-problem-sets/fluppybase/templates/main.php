@@ -15,7 +15,7 @@
 		<!-- logo, header, login -->
 		<section class = "header row well">
 			<div class="col-md-5 col-xs-12">
-				<h1><span class="logo-text">FluppyBase</span><span class="logo-icon">犭</span></h1>
+				<h1><a href="/"><span class="logo-text">FluppyBase</span><span class="logo-icon">犭</span></a></h1>
 			</div>
 			<div class="col-md-3 col-xs-4 menu-item">
 				<a href="{{ url_for('puppies') }}">Our Puppies</a>
