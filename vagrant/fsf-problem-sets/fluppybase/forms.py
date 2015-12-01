@@ -28,7 +28,7 @@ class AdopterForm(Form):
     city = TextField('City', [validators.Length(min=2, max=35)])
     state = TextField('State', [validators.Length(min=2, max=2)])
     zipCode = TextField('Zip', [validators.Length(min=2, max=6)])
-    website = TextField('Website', [validators.Length(min=6, max=50)])
+    website = TextField('Website', [validators.Length(min=6, max=100)])
     email = TextField('Email Address', [validators.Length(min=6, max=35)])
     password = PasswordField('Password', [
     	validators.Required(),
@@ -45,7 +45,7 @@ class PuppyForm(Form):
 	gender = TextField('Gender', [validators.Length(min=2, max=10)])
 	weight = TextField('Weight', [validators.Length(min=2, max=25)])
 	dateOfBirth = TextField('Birthdate', [validators.Length(min=2, max=10)])
-	picture = TextField('Photo', [validators.Length(min=6, max=100)])
+	picture = TextField('Photo', [validators.Length(min=6, max=200)])
 	shelter_id = RadioField('Shelter', [validators.Required()], choices=[('%s'%s.id,'%s'%s.name) for s in shelters])
 
 # Form fields when user adds or updates a shelter
@@ -56,5 +56,5 @@ class ShelterForm(Form):
 	city = TextField('City', [validators.Length(min=2, max=35)])
 	state = TextField('State', [validators.Length(min=2, max=10)])
 	zipCode = TextField('Zip', [validators.Length(min=2, max=6)])
-	website = TextField('Website', [validators.Length(min=6, max=50)])
+	website = TextField('Website', [validators.Length(min=6, max=150)])
 	capacity = TextField('Capacity', [validators.Length(min=2, max=6)])

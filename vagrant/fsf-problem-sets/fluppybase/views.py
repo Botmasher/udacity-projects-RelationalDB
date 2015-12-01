@@ -1,7 +1,7 @@
 # cross-import from Flask app started in __init__.py
 # following Simple Packages convention:
 # http://flask.pocoo.org/docs/0.10/patterns/packages/#simple-packages
-from fluppybase import app
+from fluppybase import app, mail
 
 # basic flask stuff
 from flask import render_template, request, redirect, url_for, flash, jsonify
@@ -10,6 +10,9 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from forms import LoginForm, AdopterForm, PuppyForm, ShelterForm
 
 import math
+
+# email functionality from mail package - currently broken
+from mail.message import Message
 
 # sqlalchemy stuff
 from sqlalchemy import create_engine, func, distinct, asc, desc
@@ -32,6 +35,9 @@ logged_in = ['unknown','Login']
 # visit root
 @app.route('/')
 def homePage():
+	# email_mssg = Message ('Hi there!', sender=('Test','me@example.com'), recipients=['myemail@mail.com'])
+	# email_mssg.body = '<h1>Sending to you</h1><p>With FluppyBase kinda love.</p>'
+	# mail.send (email_mssg)
 	return redirect (url_for ('puppies'))
 #	return render_template('main.php', login=logged_in)
 
@@ -40,7 +46,6 @@ def homePage():
 def login(login_id):
 	# create form instance of forms.py class
 	form = LoginForm (request.form)
-
 	if request.method == 'POST' and form.validate():
 		# if new user, prompt to create a profile
 		try:
@@ -187,7 +192,7 @@ def puppy(puppy_id):
 			puppy = session.query(Puppy).filter_by(id=puppy_id).first()
 			session.commit()
 			flash("Thank you for adopting a puppy! Click your profile to see all your puppies.")
-			app.logger.debug ('%s adopted puppy %s'%(adopter.name, puppy.name))
+			app.logger.info ('%s adopted puppy %s'%(adopter.name, puppy.name))
 		return redirect (url_for('homePage'))
 
 	# get the puppy and associated profile
@@ -282,7 +287,7 @@ def add (table):
 			new_profile = Profile (puppy_id=new_row.id, breed=form.breed.data, gender=form.gender.data, weight=form.weight.data, picture=form.picture.data)
 			session.add (new_profile)
 			flash ('Thank you for adding a puppy!')
-			app.logger.debug ('Added puppy %s to FluppyBase'%(new_row.name))
+			app.logger.info ('Added puppy %s to FluppyBase'%(new_row.name))
 
 		elif table == 'shelter':
 			new_row = Shelter (name=form.name.data, address=form.address.data, zipCode=form.zipCode.data, city=form.city.data, state=form.state.data, website=form.website.data, capacity=form.capacity.data)
