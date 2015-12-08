@@ -35,9 +35,9 @@ logged_in = ['unknown','Login']
 # visit root
 @app.route('/')
 def homePage():
-	# email_mssg = Message ('Hi there!', sender=('Test','me@example.com'), recipients=['myemail@mail.com'])
-	# email_mssg.body = '<h1>Sending to you</h1><p>With FluppyBase kinda love.</p>'
-	# mail.send (email_mssg)
+    #email_mssg = Message ('Hi there!', sender=('Test','me@example.com'), recipients=['myemail@mail.com'])
+    #email_mssg.body = '<h1>Sending to you</h1><p>With FluppyBase kinda love.</p>'
+    #mail.send (email_mssg)
 	return redirect (url_for ('puppies'))
 #	return render_template('main.php', login=logged_in)
 
