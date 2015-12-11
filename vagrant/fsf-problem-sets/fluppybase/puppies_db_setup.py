@@ -11,6 +11,12 @@ from sqlalchemy import update
 # functions (count, etc.)
 from sqlalchemy import func
 
+# search functionality
+import whooshalchemy
+# set the location for the whoosh index
+from fluppybase import app
+app.config['WHOOSH_BASE'] = 'my_autogen_whoosh_searchindex'
+
 # CONFIG create foreign key relationships and allow opening sessions
 from sqlalchemy.orm import relationship, sessionmaker
 
@@ -25,6 +31,9 @@ Base = declarative_base()
 class Shelter (Base):
 	# TABLE setup
 	__tablename__ = 'shelter'
+	# whoosh alchemy indexed search data
+	__searchable__ = ['name', 'address', 'city', 'state', 'zipCode', 'website']
+
 	# MAPPER variables for columns in table
 	name = Column(String(80), nullable = False)
 	address = Column(String(250), nullable = False)
@@ -35,6 +44,11 @@ class Shelter (Base):
 	occupancy = Column(Integer)
 	capacity = Column(Integer)
 	id = Column(Integer, primary_key = True)
+
+	# representation for whoosh indexing
+	def __repr__(self):
+		return '{0}(name={1})'.format(self.__class__.__name__, self.name)
+
 	# serialize JSON data for API
 	@property
 	def serialize(self):
@@ -57,6 +71,9 @@ association_table = Table('association', Base.metadata, Column('left_id', Intege
 class Puppy (Base):
 	# TABLE setup
 	__tablename__ = 'puppy'
+	# whoosh alchemy indexed search data
+	__searchable__ = ['name', 'shelter']
+
 	# MAPPER variables for columns in table
 	id = Column(Integer, primary_key = True)
 	name = Column(String(250), nullable = False)
@@ -67,6 +84,11 @@ class Puppy (Base):
 	profile = relationship('Profile', uselist=False, backref='puppy')
 	# ASSOCIATION store many-to-many relationship with child table
 	adopter = relationship('Adopter', secondary=association_table, backref='puppy')
+
+	# representation for whoosh indexing
+	def __repr__(self):
+		return '{0}(name={1})'.format(self.__class__.__name__, self.name)
+
 	# serialize JSON data for API
 	@property
 	def serialize(self):
@@ -108,6 +130,9 @@ class Adopter (Base):
 # added relation for puppy profile - 1:1 association to puppy
 class Profile (Base):
 	__tablename__ = 'profile'
+	# whoosh alchemy indexed search data
+	__searchable__ = ['breed', 'gender', 'weight', 'dateOfBirth']
+
 	id = Column(Integer, primary_key = True)
 	breed = Column(String(80))
 	gender = Column(String(80), nullable = False)

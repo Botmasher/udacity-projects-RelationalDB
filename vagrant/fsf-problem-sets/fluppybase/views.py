@@ -31,15 +31,21 @@ session = DBSession()
 # session-wide adopter id and name
 logged_in = ['unknown','Login']
 
+import whoosh
+import whooshalchemy
 
 # visit root
 @app.route('/')
 def homePage():
+    # try to send an email
     #email_mssg = Message ('Hi there!', sender=('Test','me@example.com'), recipients=['myemail@mail.com'])
     #email_mssg.body = '<h1>Sending to you</h1><p>With FluppyBase kinda love.</p>'
     #mail.send (email_mssg)
-	return redirect (url_for ('puppies'))
-#	return render_template('main.php', login=logged_in)
+    
+    # try to test getting whoosh + whooshalchemy search results
+    #search_results = Puppy.query.whoosh_search('Bailey').all()
+
+    return redirect (url_for ('puppies'))
 
 # simple login routine
 @app.route('/login/<login_id>/', methods=['GET','POST'])
