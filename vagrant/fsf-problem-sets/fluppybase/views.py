@@ -11,6 +11,9 @@ from forms import LoginForm, AdopterForm, PuppyForm, ShelterForm
 
 import math
 
+# ajax
+import json
+
 # email functionality from mail package - currently broken
 from mail.message import Message
 
@@ -140,7 +143,7 @@ def puppies(page=1):
 			# reset puppies displayed in this row
 			counter = 0
 		# place the text/image block for this puppy
-		output += '<div class="col-md-2">'
+		output += '<div class="col-md-2 testDiv">'
 		output += '<h2><a href="/puppy/%s">%s</a></h2> <br><img src="%s" alt="puppy picture for %s" style="width: 10vw">'%(p.id,p.name,session.query(Profile).filter_by(id=p.id)[0].picture,p.name)
 		output += '<br><a href="%s">edit</a> &nbsp; &nbsp;'%(url_for('edit',table='puppy',index=p.id))
 		output += '<a href="%s">delete</a>'%(url_for('delete',table='puppy',index=p.id))
@@ -148,8 +151,41 @@ def puppies(page=1):
 		# count up how many puppies are displayed in this row so far
 		counter += 1
 	
+	output += '<div><a href="" id="testAjax">Run something now!</a></div><div id="temporaryDiv"></div>'
+
+	# output += '<script type="text/javascript">\
+	# 			function loadData() {\
+	# 				var $testDiv = $(".testDiv");\
+	# 				$.ajax({\
+	# 					url:"http://en.wikipedia.org/w/api.php?action=opensearch&search=NewYorkCity&format=json&callback=wikiCallback"\
+	# 					dataType:"jsonp"\
+	# 					success: function (json) {\
+ #            				$testDiv.append (json);\
+ #            				$testDiv.text ("YA!");\
+ #            				var articles = json[1];\
+ #        				},\
+ #        				error: function (e) {\
+ #            				$testDiv.text ("Failed to load jsonp");\
+ #        				}\
+ 	#        			});\
+	# 				return false;\
+	# 			};\
+	# 			$("#test-ajax-form").submit(loadData);\
+	# 			</script>'
+
+	output += '<script src="/static/clicktest.js"></script>'
+	output += '<script src="/static/jquery.min.js"></script>'
 	return render_template('main.php', login=logged_in, content=output)
 
+@app.route('/testAjax/')
+def testAjax():
+	return jsonify(result=123)
+
+# test running ajax form
+# @app.route('/testAjax/',methods=['POST'])
+# def testAjax():
+# 	my_name = request.form['name']
+# 	return json.dumps({'status':'OK','user':my_name})
 
 # browse all shelters
 @app.route('/shelters/', methods=['GET','POST'])
