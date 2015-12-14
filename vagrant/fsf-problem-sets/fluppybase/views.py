@@ -127,7 +127,6 @@ def puppies(page=1):
 
 		# list all available pages for viewer to access all results
 		output += '<p style="text-align:center;">page '
-
 		# divide this count up into pages and link to those pages
 		for i in range( 0, int (math.ceil(p_count/results_per_page)) ):
 			output += '&nbsp;<a href="%s">%s</a>'%(url_for('puppies',page=i+1), str(i+1))
@@ -143,7 +142,7 @@ def puppies(page=1):
 			# reset puppies displayed in this row
 			counter = 0
 		# place the text/image block for this puppy
-		output += '<div class="col-md-2 testDiv">'
+		output += '<div class="col-md-2">'
 		output += '<h2><a href="/puppy/%s">%s</a></h2> <br><img src="%s" alt="puppy picture for %s" style="width: 10vw">'%(p.id,p.name,session.query(Profile).filter_by(id=p.id)[0].picture,p.name)
 		output += '<br><a href="%s">edit</a> &nbsp; &nbsp;'%(url_for('edit',table='puppy',index=p.id))
 		output += '<a href="%s">delete</a>'%(url_for('delete',table='puppy',index=p.id))
@@ -159,6 +158,14 @@ def puppies(page=1):
 	# 		<div id="temporaryDiv"></div>'
 	# output += '<script src="/static/jquery.min.js"></script>'
 	# output += '<script src="/static/clicktest.js"></script>'
+
+	output += '<div id="temporaryDiv"></div>'
+	output += '<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p id = "shnazz"></p><p>&nbsp;</p>\
+				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>\
+				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>\
+				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>'
+	output += '<script src="/static/jquery.min.js"></script>'
+	output += '<script src="/static/scrolltest.js"></script>'
 
 	return render_template('main.php', login=logged_in, content=output)
 
