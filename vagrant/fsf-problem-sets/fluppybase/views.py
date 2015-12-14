@@ -151,30 +151,15 @@ def puppies(page=1):
 		# count up how many puppies are displayed in this row so far
 		counter += 1
 	
-	output += '<div><a href="" id="testAjax">Run something now!</a></div><div id="temporaryDiv"></div>'
+	# # AJAX clicktest - take input, return text to temporary div, stop refresh
+	# # see jquery in /static/clicktest.js
+	# output += '<div><input id="username">\
+	# 		<a href="" id="testAjax">Run something now!</a>\
+	# 		</div>\
+	# 		<div id="temporaryDiv"></div>'
+	# output += '<script src="/static/jquery.min.js"></script>'
+	# output += '<script src="/static/clicktest.js"></script>'
 
-	# output += '<script type="text/javascript">\
-	# 			function loadData() {\
-	# 				var $testDiv = $(".testDiv");\
-	# 				$.ajax({\
-	# 					url:"http://en.wikipedia.org/w/api.php?action=opensearch&search=NewYorkCity&format=json&callback=wikiCallback"\
-	# 					dataType:"jsonp"\
-	# 					success: function (json) {\
- #            				$testDiv.append (json);\
- #            				$testDiv.text ("YA!");\
- #            				var articles = json[1];\
- #        				},\
- #        				error: function (e) {\
- #            				$testDiv.text ("Failed to load jsonp");\
- #        				}\
- 	#        			});\
-	# 				return false;\
-	# 			};\
-	# 			$("#test-ajax-form").submit(loadData);\
-	# 			</script>'
-
-	output += '<script src="/static/clicktest.js"></script>'
-	output += '<script src="/static/jquery.min.js"></script>'
 	return render_template('main.php', login=logged_in, content=output)
 
 @app.route('/testAjax/')
