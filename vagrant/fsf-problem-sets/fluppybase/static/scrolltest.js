@@ -14,14 +14,20 @@ setInterval(function() {
     	// Check your page position and then
     	// Load in more results
         if ( $(window).scrollTop() >= $("#temporaryDiv").offset().top ) {
+		// $.getJSON('/loadMoreResults/', {
+		//    	//a: $('input[name="a"]').val(),
+		//    	//b: $('input[name="b"]').val()
+		//    }, function(data) {
+		//    	$("#temporaryDiv").text(data.puppies[0]);
+		//    });
 			$.ajax({
-				url: 'http://en.wikipedia.org/w/api.php?action=opensearch&search=NYC&format=json&callback=wikiCallback/',
-				dataType: 'jsonp',
+				url: '/puppies/JSON/',
+				dataType: 'json',
 				success: function(json) {
-					$('#temporaryDiv').text('We are done here!');
+					$('#temporaryDiv').text(json);
 				},
 				error: function(e) {
-					$('#temporaryDiv').text('<p>'+e+'</p>' + '<p>Failed to load content!</p>');
+					$('#temporaryDiv').text('Error! Failed to load content!');
 				}
 			});
 	    }

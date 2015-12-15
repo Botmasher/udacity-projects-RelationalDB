@@ -160,7 +160,7 @@ def puppies(page=1):
 	# output += '<script src="/static/clicktest.js"></script>'
 
 	output += '<div id="temporaryDiv"></div>'
-	output += '<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p id = "shnazz"></p><p>&nbsp;</p>\
+	output += '<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>\
 				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>\
 				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>\
 				<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>'
@@ -168,6 +168,11 @@ def puppies(page=1):
 	output += '<script src="/static/scrolltest.js"></script>'
 
 	return render_template('main.php', login=logged_in, content=output)
+
+@app.route('/loadMoreResults/')
+def loadMoreResults():
+	puppies = session.query(Puppy).all()
+	return jsonify(puppies=[p.serialize for p in puppies])
 
 @app.route('/testAjax/')
 def testAjax():
