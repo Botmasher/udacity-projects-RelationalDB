@@ -21,8 +21,9 @@ def home():
 
 @app.route('/restaurants/')
 def restaurants():
+	flash("Messages work!")
 	o = '<html><body>%s</body></html>'%'List restaurants'
-	return o
+	return render_template('main.php',content=o)
 
 @app.route('/restaurants/create/', methods=['GET','POST'])
 def restaurants_c():
