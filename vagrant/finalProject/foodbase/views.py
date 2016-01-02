@@ -21,7 +21,8 @@ def home():
 
 @app.route('/restaurants/')
 def restaurants():
-	flash("Messages work!")
+	#flash("Messages work!")
+	session.query(Restaurant).all()
 	o = '<html><body>%s</body></html>'%'List restaurants'
 	return render_template('main.php',content=o)
 
