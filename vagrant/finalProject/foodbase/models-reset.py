@@ -21,9 +21,6 @@ from sqlalchemy import create_engine
 # CONFIG setup base class
 Base = declarative_base()
 
-# run models_reset at bottom of file
-reset = True
-
 # CLASS represent restaurants table, extending base class
 class Restaurant (Base):
 	# TABLE setup
@@ -75,14 +72,6 @@ class MenuItem (Base):
 			'description': self.description,
 			'restaurant': self.restaurant
 		}
-
-def models_reset():
-	return None
-	#r_1 = Restaurant(name='XYZ',address)
-	#session.add(r1)
-
-if (reset == true):
-	models_reset()
 
 # ## CONFIG end of file ##
 # # point to db - here create a sqlite file to sim db #
