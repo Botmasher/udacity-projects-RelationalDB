@@ -33,10 +33,10 @@ class Restaurant (Base):
 	id = Column(Integer, primary_key = True)
 	name = Column(String(80), nullable = False)
 	address = Column(String(250), nullable = False)
-	city = Column(String(250), nullable = False)
+	city = Column(String(100), nullable = False)
 	zipCode = Column(Integer, nullable = False)
-	state = Column(String(250), nullable = False)
-	cuisine = Column(String(250), nullable = False)
+	state = Column(String(80), nullable = False)
+	cuisine = Column(String(100), nullable = False)
 	website = Column(String(250), nullable = False)
 	children = relationship('MenuItem')
 
@@ -76,22 +76,27 @@ class MenuItem (Base):
 			'restaurant': self.restaurant
 		}
 
+## CONFIG end of file ##
+# point to db - here create a sqlite file to sim db #
+engine = create_engine('sqlite:///models.db')
+
+# go into db, add classes created as new tables in db #
+Base.metadata.create_all(engine)
+
+# CRUD session
+Base.metadata.bind = engine
+DBSession = sessionmaker (bind = engine)	# possibility to CRUD
+session = DBSession()	# open instance of the DBSession
+
 def models_reset():
+	session.query(Restaurant).delete()
+	session.query(MenuItem).delete()
+	r1 = Restaurant(name='Pizzastro',address='123 Lucky St',city='Pizzopolis',zipCode='11111',state='KY',website='www.pizzamenowclown.com',cuisine='Pizzation')
+	session.add(r1)
+	session.commit()
+	for res in session.query(Restaurant):
+		print res.name
 	return None
-	#r_1 = Restaurant(name='XYZ',address)
-	#session.add(r1)
 
-if (reset == true):
+if (reset == True):
 	models_reset()
-
-# ## CONFIG end of file ##
-# # point to db - here create a sqlite file to sim db #
-# engine = create_engine('sqlite:///foodbase/models.db')
-
-# # go into db, add classes created as new tables in db #
-# Base.metadata.create_all(engine)
-
-# # CRUD session
-# Base.metadata.bind = engine
-# DBSession = sessionmaker (bind = engine)	# possibility to CRUD
-# session = DBSession()	# open instance of the DBSession
