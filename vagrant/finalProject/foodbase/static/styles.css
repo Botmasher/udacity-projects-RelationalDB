@@ -3,13 +3,13 @@ body {
 	width: 100%;
 }
 
-h2 {
-	margin-bottom: -2px;
+p, section {
 	text-align: center;
 }
 
-p {
-	text-align: center;
+ul {
+	list-style-type: none;
+	padding: 0;
 }
 
 .container {
@@ -18,15 +18,26 @@ p {
 .header {
 }
 
-.logo-icon {
-	color: #CCCCCC;
-	font-size: 60px;
+.logo {
+	margin-top: 10px;
+	color: orange;
+	font-family: Optima, Futura, Helvetica, serif;
+	font-size: 52px;
+	text-align: center;
+	margin-bottom: 0px;
+}
+@media only screen and (max-width: 500px) {
+	.logo {
+		text-align: justify;
+		margin-left: 5%;
+	}
 }
 
-.logo-text {
-	color: gray;
-	font-family: "Brush Script MT", "Arial Rounded MT Bold", Optima, Futura, serif;
-	font-size: 60px;
+.logo-box {
+	display: inline;
+	padding: 0 22 0 22;
+	border-radius: 15px;
+	background-color: orange;
 }
 
 .menu-item, .menu-login {

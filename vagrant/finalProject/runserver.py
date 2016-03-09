@@ -4,7 +4,7 @@ from foodbase import app
 
 if __name__ == '__main__':
 	# reload server every time notice code change
-	app.debug = False
+	app.debug = True
 	# session secret key for message flashing
 	app.secret_key = 'super_secret_key'
 

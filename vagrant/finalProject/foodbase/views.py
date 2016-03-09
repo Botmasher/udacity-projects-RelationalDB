@@ -22,42 +22,46 @@ def home():
 @app.route('/restaurants/')
 def restaurants():
 	#flash("Messages work!")
-	session.query(Restaurant).all()
-	o = '<html><body>%s</body></html>'%'List restaurants'
+	restaurants = session.query(Restaurant).all()
+	o = '%s'%'Our ring of restaurants'
+	o += '<ul>'
+	for r in restaurants:
+		o += '<li><a href="http://%s">%s</a></li>' % (r.website, r.name)
+	o += '</ul>' 
 	return render_template('main.php',content=o)
 
 @app.route('/restaurants/create/', methods=['GET','POST'])
 def restaurants_c():
-	o = '<html><body>%s</body></html>'%'Form - create a restaurant'
+	o = '%s'%'Form - create a restaurant'
 	return o
 
 @app.route('/restaurants/<int:r_id>/edit/', methods=['GET','POST'])
 def restaurants_u(r_id):
-	o = '<html><body>%s</body></html>'%'Form - edit restaurant %s'%r_id
+	o = '%s'%'Form - edit restaurant %s'%r_id
 	return o
 
 @app.route('/restaurants/<int:r_id>/delete/', methods=['GET','POST'])
 def restaurants_d(r_id):
-	o = '<html><body>%s</body></html>'%'Confirm - delete restaurant %s'%r_id
+	o = '%s'%'Confirm - delete restaurant %s'%r_id
 	return o
 
 @app.route('/restaurants/<int:r_id>/menu/')
 @app.route('/restaurants/<int:r_id>/')
 def menu(r_id):
-	o = '<html><body>%s</body></html>'%'List menu items for %s'%r_id
+	o = '%s'%'List menu items for %s'%r_id
 	return o
 
 @app.route('/restaurants/<int:r_id>/menu/create', methods=['GET','POST'])
 def menu_c(r_id):
-	o = '<html><body>%s</body></html>'%'Form - create a menu item for %s'%r_id
+	o = '%s'%'Form - create a menu item for %s'%r_id
 	return o
 
 @app.route('/restaurants/<int:r_id>/menu/<int:m_id>/edit/', methods=['GET','POST'])
 def menu_u(r_id,m_id):
-	o = '<html><body>%s</body></html>'%'Form - edit menu item %s for %s'%(m_id,r_id)
+	o = '%s'%'Form - edit menu item %s for %s'%(m_id,r_id)
 	return o
 
 @app.route('/restaurants/<int:r_id>/menu/<int:m_id>/delete/', methods=['GET','POST'])
 def menu_d(r_id,m_id):
-	o = '<html><body>%s</body></html>'%'Confirm - delete menu item %s from restaurant %s'%(m_id,r_id)
+	o = '%s'%'Confirm - delete menu item %s from restaurant %s'%(m_id,r_id)
 	return o
