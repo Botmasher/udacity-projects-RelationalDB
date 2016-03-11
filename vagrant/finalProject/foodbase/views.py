@@ -4,6 +4,9 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 
 import math
 
+# get my WTForms classes from forms.py
+from forms import LoginForm, RestaurantForm, MenuItemForm
+
 # sql functionality
 from sqlalchemy import create_engine, func, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
@@ -32,8 +35,13 @@ def restaurants():
 
 @app.route('/restaurants/create/', methods=['GET','POST'])
 def restaurants_c():
-	o = '%s'%'Form - create a restaurant'
-	return o
+	form = RestaurantForm (request.form)
+	if request.method == 'POST' and form.validate():
+		new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+		session.add (new_row)
+		session.commit ()
+		return redirect (url_for('home'))
+	return render_template ('form.php', form=form, content='')
 
 @app.route('/restaurants/<int:r_id>/edit/', methods=['GET','POST'])
 def restaurants_u(r_id):

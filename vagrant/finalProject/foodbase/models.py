@@ -22,7 +22,7 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 # run models_reset at bottom of file
-reset = True
+reset = False
 
 # CLASS represent restaurants table, extending base class
 class Restaurant (Base):
