@@ -22,7 +22,7 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 # run models_reset at bottom of file
-reset = False
+reset = True
 
 # CLASS represent restaurants table, extending base class
 class Restaurant (Base):
@@ -78,7 +78,7 @@ class MenuItem (Base):
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
-engine = create_engine('sqlite:///models.db')
+engine = create_engine('sqlite:///foodbase/models.db')
 
 # go into db, add classes created as new tables in db #
 Base.metadata.create_all(engine)

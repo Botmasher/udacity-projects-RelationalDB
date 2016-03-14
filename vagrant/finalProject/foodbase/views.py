@@ -30,17 +30,22 @@ def restaurants():
 	o += '<ul>'
 	for r in restaurants:
 		o += '<li><a href="http://%s">%s</a></li>' % (r.website, r.name)
-	o += '</ul>' 
+	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('restaurants_c'))
 	return render_template('main.php',content=o)
 
 @app.route('/restaurants/create/', methods=['GET','POST'])
 def restaurants_c():
+	# get form template from WTForm class for this table
 	form = RestaurantForm (request.form)
+
+	# add restaurant to database
 	if request.method == 'POST' and form.validate():
 		new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
 		session.add (new_row)
 		session.commit ()
 		return redirect (url_for('home'))
+		
+	# display form for adding restaurant
 	return render_template ('form.php', form=form, content='')
 
 @app.route('/restaurants/<int:r_id>/edit/', methods=['GET','POST'])
