@@ -24,7 +24,6 @@ def home():
 
 @app.route('/restaurants/')
 def restaurants():
-	#flash("Messages work!")
 	restaurants = session.query(Restaurant).all()
 	o = '%s'%'Our ring of restaurants'
 	o += '<ul>'
@@ -65,13 +64,13 @@ def restaurants_u(r_id):
 		if table == 'r_table':
 			mod_row = session.query(Restaurant).filter_by(id=r_id)[0]
 			mod_row.name = form.name.data
+			mod_row.cuisine = form.cuisine.data
 			mod_row.address = form.address.data
 			mod_row.city = form.city.data
 			mod_row.state = form.state.data
 			mod_row.zipCode = form.zipCode.data
 			mod_row.website = form.website.data
-			mod_row.cuisine = form.cuisine.data
-			flash ('This restaurant\'s profile has been updated!')
+			flash ('I updated the profile for %s!'%mod_row.name)
 
 		# your edit URL has a variable for another table, like MenuItem
 		# used for handling multiple tables at same url
@@ -79,8 +78,8 @@ def restaurants_u(r_id):
 		elif table == 'otherTable':
 			pass
 		else:
-			flash ('Unable to add your info to FoodBase. Don\'t leave yet! Please check that the form is completely filled out.')
-			return redirect (url_for ('restaurants_u', r_id=r_id))
+			flash ('Help, I couldn\'t add that info to FoodBase! Do you mind checking if you filled out the whole form?')
+			return redirect (url_for('restaurants_u', r_id=r_id))
 
 		# update row in the db
 		session.add (mod_row)
@@ -88,11 +87,21 @@ def restaurants_u(r_id):
 
 		return redirect (url_for('home'))
 
-	# build the form here
-	# 
-	#
-	# 
-	return render_template('form.php', content='')
+	# retreive form data and build the form for GET requests
+	if table == 'r_table':
+		# if user requests update restaurant form
+		r = session.query(Restaurant).filter_by(id=r_id)[0]
+		form.name.data = r.name
+		form.cuisine.data = r.cuisine
+		form.address.data = r.address
+		form.city.data = r.city
+		form.state.data = r.state
+		form.zipCode.data = r.zipCode
+		form.website.data = r.website
+	else:
+		# if user requests other update forms
+		pass
+	return render_template('form.php', form=form, content='')
 
 @app.route('/restaurants/<int:r_id>/delete/', methods=['GET','POST'])
 def restaurants_d(r_id):
