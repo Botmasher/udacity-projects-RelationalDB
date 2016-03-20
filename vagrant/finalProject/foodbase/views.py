@@ -28,7 +28,7 @@ def restaurants():
 	o = '%s'%'Our ring of restaurants'
 	o += '<ul>'
 	for r in restaurants:
-		o += '<li><a href="http://%s">%s</a> <a href="%s">(edit)</a></li>' % (r.website, r.name, url_for('restaurants_u',r_id=r.id))
+		o += '<li><a href="http://%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (r.website, r.name, url_for('restaurants_u',r_id=r.id), url_for('restaurants_d',r_id=r.id))
 	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('restaurants_c'))
 	return render_template('main.php',content=o)
 
@@ -54,10 +54,10 @@ def restaurants_u(r_id):
 	if table == 'r_table':
 		form = RestaurantForm (request.form)
 	else:
-		flash ('This isn\'t the /edit/ you are looking for! We don\'t recognize that URL. Please try editing a /restaurant.')
+		flash ('This isn\'t the /edit/ you are looking for! We don\'t recognize that URL.')
 		return redirect (url_for('home'))
 
-	# edit database on form submission
+	# POST - edit database on form submission
 	if request.method == 'POST' and form.validate():
 
 		# make edits to the restaurant table
@@ -73,7 +73,7 @@ def restaurants_u(r_id):
 			flash ('I updated the profile for %s!'%mod_row.name)
 
 		# your edit URL has a variable for another table, like MenuItem
-		# used for handling multiple tables at same url
+		# build out to use for handling multiple tables at same url
 		# e.g. /edit/<table_name>/<int:index>/
 		elif table == 'otherTable':
 			pass
@@ -87,7 +87,7 @@ def restaurants_u(r_id):
 
 		return redirect (url_for('home'))
 
-	# retreive form data and build the form for GET requests
+	# GET - retreive form data and build the form
 	if table == 'r_table':
 		# if user requests update restaurant form
 		r = session.query(Restaurant).filter_by(id=r_id)[0]
@@ -105,8 +105,39 @@ def restaurants_u(r_id):
 
 @app.route('/restaurants/<int:r_id>/delete/', methods=['GET','POST'])
 def restaurants_d(r_id):
-	o = '%s'%'Confirm - delete restaurant %s'%r_id
-	return o
+	# retrieve form class from forms.py based on URL keyword
+	table = 'r_table'
+
+	# make edits to the restaurant table
+	if table == 'r_table':
+		mod_row = session.query(Restaurant).filter_by(id=r_id)[0]
+
+	# your URL has a variable for another table, like MenuItem
+	# build out to handle multiple tables at same route
+	# e.g. /edit/<table_name>/<int:index>/
+	elif table == 'otherTable':
+		# mod_row = session.query(OtherTable).filter_by(id=other_id)[0]
+		pass
+	else:
+		flash ('I couldn\'t delete that info from FoodBase!')
+		return redirect (url_for('home'))
+
+	# POST - edit database on form submission
+	if request.method == 'POST':
+		
+		# delete selected row
+		session.delete (mod_row)
+		session.commit()
+
+		flash ('I erased that information from FoodBase!')
+
+		return redirect (url_for('home'))
+
+	# GET - retreive form data and build the form
+	o = '<p>Do you really want to delete %s?</p>\
+		<form action="" method="POST"><button>Remove it!</button></form> \
+		<a href="%s">NO! Go home!</a>'%(mod_row.name, url_for('home'))
+	return render_template('main.php', content=o)
 
 @app.route('/restaurants/<int:r_id>/menu/')
 @app.route('/restaurants/<int:r_id>/')
