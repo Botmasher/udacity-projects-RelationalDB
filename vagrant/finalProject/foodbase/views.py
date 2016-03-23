@@ -28,18 +28,41 @@ def restaurants():
 	o = '%s'%'Our ring of restaurants'
 	o += '<ul>'
 	for r in restaurants:
-		o += '<li><a href="http://%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (r.website, r.name, url_for('restaurants_u',r_id=r.id), url_for('restaurants_d',r_id=r.id))
-	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('restaurants_c'))
+		o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('menu', r_id=r.id), r.name, url_for('restaurants_u',r_id=r.id), url_for('restaurants_d',r_id=r.id))
+	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('add', table='Restaurant'))
 	return render_template('main.php',content=o)
 
-@app.route('/restaurants/create/', methods=['GET','POST'])
-def restaurants_c():
+@app.route('/restaurants/<int:r_id>/menu/')
+@app.route('/restaurants/<int:r_id>/')
+def menu(r_id):
+	r = session.query(Restaurant).filter_by(id=r_id)[0]
+	m = session.query(MenuItem).filter_by(restaurant_id=r_id)
+	o = '<p>%s - main menu</p>'%r.name
+	o += '<ul>'
+	for i in m:
+		o += '<li>%s<br>%s<br>%s %s</li>'%(m.name,m.description,'edit url', 'delete url') 
+	o += '</ul>'
+	o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
+	return render_template ('main.php',content=o)
+
+@app.route('/add/<table>/', methods=['GET','POST'])
+def add (table):
 	# get form template from WTForm class for this table
 	form = RestaurantForm (request.form)
-
+	if table == 'Restaurant':
+		form = RestaurantForm(request.form)
+	elif table == 'MenuItem':
+		form = MenuItemForm(request.form)
+	else:
+		flash ('I didn\'t understand! Please try adding a /Restaurant/ or a /MenuItem/.')
 	# add restaurant to database
 	if request.method == 'POST' and form.validate():
-		new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+		if table == 'Restaurant':
+			new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+		elif table == 'MenuItem':
+			new_row = MenuItem (name=form.name.data, description=form.description.data, restaurant_id=form.restaurant_id.data)
+		else:
+			flash ('')
 		session.add (new_row)
 		session.commit ()
 		return redirect (url_for('home'))
@@ -138,12 +161,6 @@ def restaurants_d(r_id):
 		<form action="" method="POST"><button>Remove it!</button></form> \
 		<a href="%s">NO! Go home!</a>'%(mod_row.name, url_for('home'))
 	return render_template('main.php', content=o)
-
-@app.route('/restaurants/<int:r_id>/menu/')
-@app.route('/restaurants/<int:r_id>/')
-def menu(r_id):
-	o = '%s'%'List menu items for %s'%r_id
-	return o
 
 @app.route('/restaurants/<int:r_id>/menu/create', methods=['GET','POST'])
 def menu_c(r_id):
