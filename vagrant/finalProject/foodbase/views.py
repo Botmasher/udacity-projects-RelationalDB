@@ -18,9 +18,11 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
 @app.route('/')
 def home():
 	return redirect(url_for('restaurants'))
+
 
 @app.route('/restaurants/')
 def restaurants():
@@ -28,9 +30,10 @@ def restaurants():
 	o = '%s'%'Our ring of restaurants'
 	o += '<ul>'
 	for r in restaurants:
-		o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('menu', r_id=r.id), r.name, url_for('restaurants_u',r_id=r.id), url_for('restaurants_d',r_id=r.id))
+		o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('menu', r_id=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
 	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('add', table='Restaurant'))
 	return render_template('main.php',content=o)
+
 
 @app.route('/restaurants/<int:r_id>/menu/')
 @app.route('/restaurants/<int:r_id>/')
@@ -40,10 +43,11 @@ def menu(r_id):
 	o = '<p>%s - main menu</p>'%r.name
 	o += '<ul>'
 	for i in m:
-		o += '<li>%s<br>%s<br>%s %s</li>'%(m.name,m.description,'edit url', 'delete url') 
+		o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
 	o += '</ul>'
 	o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
 	return render_template ('main.php',content=o)
+
 
 @app.route('/add/<table>/', methods=['GET','POST'])
 def add (table):
@@ -55,37 +59,42 @@ def add (table):
 		form = MenuItemForm(request.form)
 	else:
 		flash ('I didn\'t understand! Please try adding a /Restaurant/ or a /MenuItem/.')
-	# add restaurant to database
+
+	# POST add restaurant to database
 	if request.method == 'POST' and form.validate():
 		if table == 'Restaurant':
 			new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
 		elif table == 'MenuItem':
 			new_row = MenuItem (name=form.name.data, description=form.description.data, restaurant_id=form.restaurant_id.data)
 		else:
-			flash ('')
+			flash ('Please try to add a /Restaurant/ or a /MenuItem/.')
 		session.add (new_row)
 		session.commit ()
 		return redirect (url_for('home'))
 		
-	# display form for adding restaurant
+	# GET display form for adding restaurant
 	return render_template ('form.php', form=form, content='')
 
-@app.route('/restaurants/<int:r_id>/edit/', methods=['GET','POST'])
-def restaurants_u(r_id):
+
+@app.route('/update/<table>/<int:index>/', methods=['GET','POST'])
+def update(table,index):
 	# retrieve form class from forms.py based on URL keyword
-	table = 'r_table'
-	if table == 'r_table':
+	if table == 'Restaurant':
 		form = RestaurantForm (request.form)
+	elif table == 'MenuItem':
+		form = MenuItemForm (request.form)
 	else:
-		flash ('This isn\'t the /edit/ you are looking for! We don\'t recognize that URL.')
+		flash ('This isn\'t the /update/ you are looking for! We don\'t recognize that URL.')
 		return redirect (url_for('home'))
 
-	# POST - edit database on form submission
-	if request.method == 'POST' and form.validate():
+	# POST edit database on form submission
+	if request.method == 'POST':
 
-		# make edits to the restaurant table
-		if table == 'r_table':
-			mod_row = session.query(Restaurant).filter_by(id=r_id)[0]
+		is_valid = form.validate() 	# store validation test result
+
+		# make edits to a restaurant
+		if table == 'Restaurant' and is_valid:
+			mod_row = session.query(Restaurant).filter_by(id=index)[0]
 			mod_row.name = form.name.data
 			mod_row.cuisine = form.cuisine.data
 			mod_row.address = form.address.data
@@ -95,25 +104,28 @@ def restaurants_u(r_id):
 			mod_row.website = form.website.data
 			flash ('I updated the profile for %s!'%mod_row.name)
 
-		# your edit URL has a variable for another table, like MenuItem
-		# build out to use for handling multiple tables at same url
-		# e.g. /edit/<table_name>/<int:index>/
-		elif table == 'otherTable':
-			pass
+		# make edits to a menu item
+		elif table == 'MenuItem' and is_valid:
+			mod_row = session.query(MenuItem).filter_by(id=index)[0]
+			mod_row.name = form.name.data
+			mod_row.description = form.description.data
+			mod_row.restaurant_id = form.restaurant_id.data
+
+		# cannot update the table
 		else:
 			flash ('Help, I couldn\'t add that info to FoodBase! Do you mind checking if you filled out the whole form?')
-			return redirect (url_for('restaurants_u', r_id=r_id))
+			return redirect (url_for('update', table=table, index=index))
 
-		# update row in the db
+		# update table row in the db
 		session.add (mod_row)
 		session.commit()
-
+		flash ('Successfully updated %s!'%mod_row.name)
 		return redirect (url_for('home'))
 
-	# GET - retreive form data and build the form
-	if table == 'r_table':
+	# GET - retrieve data and build the form
+	if table == 'Restaurant':
 		# if user requests update restaurant form
-		r = session.query(Restaurant).filter_by(id=r_id)[0]
+		r = session.query(Restaurant).filter_by(id=index)[0]
 		form.name.data = r.name
 		form.cuisine.data = r.cuisine
 		form.address.data = r.address
@@ -121,58 +133,43 @@ def restaurants_u(r_id):
 		form.state.data = r.state
 		form.zipCode.data = r.zipCode
 		form.website.data = r.website
+	elif table == 'MenuItem':
+		m = session.query(MenuItem).filter_by(id=index)[0]
+		form.name.data = m.name
+		form.description.data = m.description
+		form.restaurant_id.data = m.restaurant_id
 	else:
 		# if user requests other update forms
-		pass
+		flash ('I couldn\'t update that. Please try to update a /Restaurant or a /MenuItem instead!')
 	return render_template('form.php', form=form, content='')
 
-@app.route('/restaurants/<int:r_id>/delete/', methods=['GET','POST'])
-def restaurants_d(r_id):
-	# retrieve form class from forms.py based on URL keyword
-	table = 'r_table'
 
-	# make edits to the restaurant table
-	if table == 'r_table':
-		mod_row = session.query(Restaurant).filter_by(id=r_id)[0]
-
-	# your URL has a variable for another table, like MenuItem
-	# build out to handle multiple tables at same route
-	# e.g. /edit/<table_name>/<int:index>/
-	elif table == 'otherTable':
-		# mod_row = session.query(OtherTable).filter_by(id=other_id)[0]
-		pass
+@app.route('/delete/<table>/<int:index>/', methods=['GET','POST'])
+def delete(table,index):
+	# retrieve form class from forms.py based on URL
+	# delete a restaurant
+	if table == 'Restaurant':
+		mod_row = session.query(Restaurant).filter_by(id=index)[0]
+	# delete a menu item
+	elif table == 'MenuItem':
+		mod_row = session.query(MenuItem).filter_by(id=index)[0]
 	else:
 		flash ('I couldn\'t delete that info from FoodBase!')
 		return redirect (url_for('home'))
 
-	# POST - edit database on form submission
+	# POST - delete from database on submission
 	if request.method == 'POST':
-		
 		# delete selected row
 		session.delete (mod_row)
 		session.commit()
-
 		flash ('I erased that information from FoodBase!')
-
 		return redirect (url_for('home'))
 
-	# GET - retreive form data and build the form
-	o = '<p>Do you really want to delete %s?</p>\
-		<form action="" method="POST"><button>Remove it!</button></form> \
-		<a href="%s">NO! Go home!</a>'%(mod_row.name, url_for('home'))
+	# GET - create page verifying the delete
+	o = '<p>Do you really want to delete %s?</p>' % mod_row.name
+	o+= '<form action="" method="POST"><button>Delete!</button></form>'
+
+	o+= '<form action="%s" method="GET">\
+		<button>No!</button></form>' % url_for('home')
+
 	return render_template('main.php', content=o)
-
-@app.route('/restaurants/<int:r_id>/menu/create', methods=['GET','POST'])
-def menu_c(r_id):
-	o = '%s'%'Form - create a menu item for %s'%r_id
-	return o
-
-@app.route('/restaurants/<int:r_id>/menu/<int:m_id>/edit/', methods=['GET','POST'])
-def menu_u(r_id,m_id):
-	o = '%s'%'Form - edit menu item %s for %s'%(m_id,r_id)
-	return o
-
-@app.route('/restaurants/<int:r_id>/menu/<int:m_id>/delete/', methods=['GET','POST'])
-def menu_d(r_id,m_id):
-	o = '%s'%'Confirm - delete menu item %s from restaurant %s'%(m_id,r_id)
-	return o

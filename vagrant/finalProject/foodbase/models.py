@@ -21,8 +21,8 @@ from sqlalchemy import create_engine
 # CONFIG setup base class
 Base = declarative_base()
 
-# run models_reset at bottom of file
-reset = True
+# set to True for models_reset() - wipe db
+reset = False
 
 # CLASS represent restaurants table, extending base class
 class Restaurant (Base):
@@ -88,6 +88,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker (bind = engine)	# possibility to CRUD
 session = DBSession()	# open instance of the DBSession
 
+# /!\ Wipe and refresh the db
 def models_reset():
 	session.query(Restaurant).delete()
 	session.query(MenuItem).delete()
@@ -98,5 +99,6 @@ def models_reset():
 		print res.name
 	return None
 
+# /!\ Runs the db reset above
 if (reset == True):
 	models_reset()

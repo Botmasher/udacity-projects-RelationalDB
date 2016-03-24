@@ -29,7 +29,7 @@ class RestaurantForm(Form):
 
 # Form fields when user adds or updates menu item, including its restaurant
 class MenuItemForm (Form):
-	#restaurants = session.query(Restaurant).all()
+	restaurants = session.query(Restaurant).all()
 	name = TextField('Item name', [validators.Length(min=2, max=250)])
-	desc = TextField('Description', [validators.Length(min=5, max=800)])
-	#restaurant_id = RadioField('Restaurant', [validators.Required()], choices=[('%s'%r.id,'%s'%r.name) for r in restaurants])
+	description = TextField('Description', [validators.Length(min=5, max=800)])
+	restaurant_id = RadioField('Restaurant', [validators.Required()], choices=[('%s'%r.id,'%s'%r.name) for r in restaurants])
