@@ -173,3 +173,24 @@ def delete(table,index):
 		<button>No!</button></form>' % url_for('home')
 
 	return render_template('main.php', content=o)
+
+@app.route('/<table>/<int:index>/JSON/')
+@app.route('/<table>/JSON/')
+def json_api(table,index=None):
+	if table == 'Restaurant' or table == 'restaurant':
+		if index != None:
+			data = session.query(Restaurant).filter_by(id=index).one()
+			return jsonify(Restaurant=[data.serialize])
+		else:
+			data = session.query(Restaurant).all()
+			return jsonify(Restaurants = [r.serialize for r in data])
+	elif table == 'MenuItem' or table == 'menuitem':
+		if index != None:
+			data = session.query(MenuItem).filter_by(id=index).one()
+			return jsonify(Restaurant=[data.serialize])
+		else:
+			data = session.query(MenuItem).all()
+			return jsonify(Restaurants = [r.serialize for r in data])
+	else:
+		flash ('Could not find any FoodBase data matching your request!')
+		return redirect (url_for('home'))
