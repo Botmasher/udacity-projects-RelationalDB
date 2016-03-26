@@ -4,6 +4,9 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 
 import math
 
+# /!\ read up on json and requests - used here to handle API
+import json, requests
+
 # get my WTForms classes from forms.py
 from forms import LoginForm, RestaurantForm, MenuItemForm
 
@@ -180,17 +183,25 @@ def json_api(table,index=None):
 	if table == 'Restaurant' or table == 'restaurant':
 		if index != None:
 			data = session.query(Restaurant).filter_by(id=index).one()
-			return jsonify(Restaurant=[data.serialize])
+			return jsonify(Restaurant = [data.serialize])
 		else:
 			data = session.query(Restaurant).all()
 			return jsonify(Restaurants = [r.serialize for r in data])
 	elif table == 'MenuItem' or table == 'menuitem':
 		if index != None:
 			data = session.query(MenuItem).filter_by(id=index).one()
-			return jsonify(Restaurant=[data.serialize])
+			return jsonify(MenuItem = [data.serialize])
 		else:
 			data = session.query(MenuItem).all()
-			return jsonify(Restaurants = [r.serialize for r in data])
+			return jsonify(MenuItems = [r.serialize for r in data])
 	else:
 		flash ('Could not find any FoodBase data matching your request!')
 		return redirect (url_for('home'))
+
+
+# @app.route('/populateRelations/')
+# def populateRelations():
+# 	jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=Chicago')
+# 	jsonRestaurants = json.loads (jsonRestaurants.text)
+# 	names = jsonRestaurants[0]['name'][0]
+# 	return render_template('main.php',content='')
