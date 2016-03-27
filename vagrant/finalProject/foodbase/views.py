@@ -34,7 +34,8 @@ def restaurants():
 	o += '<ul>'
 	for r in restaurants:
 		o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('menu', r_id=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
-	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%(url_for('add', table='Restaurant'))
+	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+	o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations')
 	return render_template('main.php',content=o)
 
 
@@ -53,7 +54,7 @@ def menu(r_id):
 
 
 @app.route('/add/<table>/', methods=['GET','POST'])
-def add (table):
+def add(table):
 	# get form template from WTForm class for this table
 	form = RestaurantForm (request.form)
 	if table == 'Restaurant':
@@ -170,9 +171,9 @@ def delete(table,index):
 
 	# GET - create page verifying the delete
 	o = '<p>Do you really want to delete %s?</p>' % mod_row.name
-	o+= '<form action="" method="POST"><button>Delete!</button></form>'
+	o += '<form action="" method="POST"><button>Delete!</button></form>'
 
-	o+= '<form action="%s" method="GET">\
+	o += '<form action="%s" method="GET">\
 		<button>No!</button></form>' % url_for('home')
 
 	return render_template('main.php', content=o)
@@ -199,9 +200,33 @@ def json_api(table,index=None):
 		return redirect (url_for('home'))
 
 
-# @app.route('/populateRelations/')
-# def populateRelations():
-# 	jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=Chicago')
-# 	jsonRestaurants = json.loads (jsonRestaurants.text)
-# 	names = jsonRestaurants[0]['name'][0]
-# 	return render_template('main.php',content='')
+@app.route('/repopulateRelations/',methods=['GET','POST'])
+def repopulateRelations():
+
+	if request.method == 'POST':
+		
+		# clean out current items in db
+		session.query(Restaurant).delete()
+		session.query(MenuItem).delete()
+
+		# grab data from API
+		jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=Kailua')
+		jsonRestaurants = json.loads (jsonRestaurants.text)
+		restaurant_list = jsonRestaurants['restaurants']
+
+		# create new restaurant objects and add to relation 
+		for r in restaurant_list:
+			new_r = Restaurant(name=r['name'], address=r['address'], city=r['city'],state=r['state'], zipCode=r['postal_code'], website=r['reserve_url'])
+			session.add (new_r)
+
+		session.commit()
+		flash('You successfully wiped and repopulated FoodBase')
+		return redirect (url_for('home'))
+
+	# GET - warn that user is about to reset the whole db
+	else:
+		o = 'You are about to reset our entire database! Are you MAD?!?'
+		o += '<form action="" method="POST">\
+			  <button>Yes</button></form>'
+		o += '<p><a href="%s">Not yet.</a></p>'%url_for('home')
+	return render_template('main.php',content=o)

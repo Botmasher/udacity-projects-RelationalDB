@@ -34,10 +34,10 @@ class Restaurant (Base):
 	name = Column(String(80), nullable = False)
 	address = Column(String(250), nullable = False)
 	city = Column(String(100), nullable = False)
-	zipCode = Column(Integer, nullable = False)
-	state = Column(String(80), nullable = False)
-	cuisine = Column(String(100), nullable = False)
-	website = Column(String(250), nullable = False)
+	zipCode = Column(Integer, nullable = True)
+	state = Column(String(80), nullable = True)
+	cuisine = Column(String(100), nullable = True)
+	website = Column(String(250), nullable = True)
 	children = relationship('MenuItem')
 
 	# serialize JSON data for API
