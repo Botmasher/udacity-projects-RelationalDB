@@ -28,29 +28,30 @@ def home():
 
 
 @app.route('/restaurants/')
-def restaurants():
-	restaurants = session.query(Restaurant).all()
-	o = '%s'%'Our ring of restaurants'
-	o += '<ul>'
-	for r in restaurants:
-		o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('menu', r_id=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
-	o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
-	o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations')
+@app.route('/restaurants/<int:index>/')
+@app.route('/restaurants/<int:index>/menu/')
+def restaurants(index=None):
+	# browse menu items for a single restaurant
+	if index != None:
+		r = session.query(Restaurant).filter_by(id=index)[0]
+		m = session.query(MenuItem).filter_by(restaurant_id=index)
+		o = '<p>%s - main menu</p>'%r.name
+		o += '<ul>'
+		for i in m:
+			o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
+		o += '</ul>'
+		o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
+	# browse all restaurants
+	else:
+		restaurants = session.query(Restaurant).all()
+		o = '%s'%'Our ring of restaurants'
+		o += '<ul>'
+		for r in restaurants:
+			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
+		o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations')
+
 	return render_template('main.php',content=o)
-
-
-@app.route('/restaurants/<int:r_id>/menu/')
-@app.route('/restaurants/<int:r_id>/')
-def menu(r_id):
-	r = session.query(Restaurant).filter_by(id=r_id)[0]
-	m = session.query(MenuItem).filter_by(restaurant_id=r_id)
-	o = '<p>%s - main menu</p>'%r.name
-	o += '<ul>'
-	for i in m:
-		o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
-	o += '</ul>'
-	o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
-	return render_template ('main.php',content=o)
 
 
 @app.route('/add/<table>/', methods=['GET','POST'])
