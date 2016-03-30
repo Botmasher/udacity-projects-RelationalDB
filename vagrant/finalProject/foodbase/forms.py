@@ -26,6 +26,7 @@ class RestaurantForm(Form):
 	zipCode = TextField('Zip Code', [validators.Length(min=5, max=5)])
 	state = TextField('State', [validators.Length(min=2, max=80)])
 	website = TextField('Website', [validators.Length(min=5, max=250)])
+	image = TextField('Image', [validators.Length(min=5, max=250)])
 
 # Form fields when user adds or updates menu item, including its restaurant
 class MenuItemForm (Form):

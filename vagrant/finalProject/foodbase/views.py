@@ -31,6 +31,10 @@ def home():
 @app.route('/restaurants/<int:index>/')
 @app.route('/restaurants/<int:index>/menu/')
 def restaurants(index=None):
+
+	# add city variable for switching between markets
+	user_city = 'Chicago'
+
 	# browse menu items for a single restaurant
 	if index != None:
 		r = session.query(Restaurant).filter_by(id=index)[0]
@@ -49,7 +53,7 @@ def restaurants(index=None):
 		for r in restaurants:
 			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
 		o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
-		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations')
+		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations',city_name=user_city)
 
 	return render_template('main.php',content=o)
 
@@ -201,8 +205,8 @@ def json_api(table,index=None):
 		return redirect (url_for('home'))
 
 
-@app.route('/repopulateRelations/',methods=['GET','POST'])
-def repopulateRelations():
+@app.route('/repopulateRelations/<city_name>',methods=['GET','POST'])
+def repopulateRelations(city_name):
 
 	if request.method == 'POST':
 		
@@ -211,13 +215,13 @@ def repopulateRelations():
 		session.query(MenuItem).delete()
 
 		# grab data from API
-		jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=Kailua')
+		jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=%s'%city_name)
 		jsonRestaurants = json.loads (jsonRestaurants.text)
 		restaurant_list = jsonRestaurants['restaurants']
 
 		# create new restaurant objects and add to relation 
 		for r in restaurant_list:
-			new_r = Restaurant(name=r['name'], address=r['address'], city=r['city'],state=r['state'], zipCode=r['postal_code'], website=r['reserve_url'])
+			new_r = Restaurant(name=r['name'], address=r['address'], city=r['city'],state=r['state'], zipCode=r['postal_code'], website=r['reserve_url'], image=r['image_url'])
 			session.add (new_r)
 
 		session.commit()

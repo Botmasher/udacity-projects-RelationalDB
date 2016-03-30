@@ -38,6 +38,7 @@ class Restaurant (Base):
 	state = Column(String(80), nullable = True)
 	cuisine = Column(String(100), nullable = True)
 	website = Column(String(250), nullable = True)
+	image = Column(String(250), nullable = True)
 	children = relationship('MenuItem')
 
 	# serialize JSON data for API
@@ -50,7 +51,9 @@ class Restaurant (Base):
 			'city': self.city,
 			'zipCode': self.zipCode,
 			'state': self.state,
-			'website': self.website
+			'website': self.website,
+			'cuisine': self.cuisine,
+			'image': self.image
 		}
 
 # CLASS represent menu items table, extending base class	
