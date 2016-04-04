@@ -33,7 +33,7 @@ def home():
 def restaurants(index=None):
 
 	# add city variable for switching between markets
-	user_city = 'Chicago'
+	user_city = 'Kona'
 
 	# browse menu items for a single restaurant
 	if index != None:
@@ -41,6 +41,7 @@ def restaurants(index=None):
 		m = session.query(MenuItem).filter_by(restaurant_id=index)
 		o = '<p>%s - main menu</p>'%r.name
 		o += '<ul>'
+
 		for i in m:
 			o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
 		o += '</ul>'
@@ -49,6 +50,9 @@ def restaurants(index=None):
 	else:
 		restaurants = session.query(Restaurant).all()
 		o = '%s'%'Our ring of restaurants'
+		# display image grid
+		#for r in restaurants:
+		#	o += '<img src="%s" alt="%s">'%(r.image_url,r.name)
 		o += '<ul>'
 		for r in restaurants:
 			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
