@@ -26,11 +26,12 @@ session = DBSession()
 def home():
 	return redirect(url_for('restaurants'))
 
-
-@app.route('/restaurants/')
-@app.route('/restaurants/<int:index>/')
-@app.route('/restaurants/<int:index>/menu/')
-def restaurants(index=None):
+# read routes for restaurants and menu items
+@app.route('/restaurants/') 							# view all restaurants
+@app.route('/restaurants/<int:index>/')					# results broken into pages
+@app.route('/restaurants/<int:page>/<int:per_page>')	# paginate results
+@app.route('/restaurants/<int:index>/menu/') 			# view a restaurant menu
+def restaurants (index=None, page=1, per_page=3):
 
 	# add city variable for switching between markets
 	user_city = 'Kona'
@@ -45,25 +46,45 @@ def restaurants(index=None):
 			o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
 		o += '</ul>'
 		o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
+	
 	# browse all restaurants
 	else:
+		# Query and title
 		restaurants = session.query(Restaurant).all()
 		o = '%s'%'<h2>Our ring of restaurants</h2>'
-		
-		# display image grid
-		counter = 0
+
+		#
+		# Display Image Grid
+		#
 		o += '<div id = "frontimgs">'
+		# count through results and paginate based on current "page"
+		count = 0
 		for r in restaurants:
-			o += '<img src="%s" alt="%s">'%(r.image,r.name)
-			counter += 1
-			if counter % 4 == 0:
-				o += '<br>'
+			# use counter to show only results between page start and page end
+			current_results = 0 	# number of results being displayed this page load
+			if count >= (per_page*page-per_page) and count < (per_page*page):
+				current_results += 1
+				# restaurant link and image
+				o += '<a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
+				# break off a new row after a certain number of results
+				if current_results % 4 == 0:
+					o += '<br>'
+			count += 1
+
+		# row of links to all paginated results
+		o += '</div><div>'
+		# display links for as many pages as count is divisible by paginator
+		for p in range (0, int(math.ceil(count/per_page))+1):
+			# build pagination link
+			o += '&nbsp; <a href="%s">page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
 		o += '</div>'
 
+		# basic text list of all restaurants with CRUD options
 		o += '<ul>'
 		for r in restaurants:
 			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
 		o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+		# /!\ DANGEROUS database wipe
 		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations',city_name=user_city)
 
 	return render_template('main.php',content=o)
