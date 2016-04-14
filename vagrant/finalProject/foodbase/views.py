@@ -26,6 +26,7 @@ session = DBSession()
 def home():
 	return redirect(url_for('restaurants'))
 
+
 # read routes for restaurants and menu items
 @app.route('/restaurants/') 							# view all restaurants
 @app.route('/restaurants/<int:index>/')					# results broken into pages
@@ -54,10 +55,11 @@ def restaurants (index=None, page=1, per_page=3):
 		o = '%s'%'<h2>Our ring of restaurants</h2>'
 
 		#
-		# Display Image Grid
+		# Display image grid
 		#
-		o += '<div id = "frontimgs">'
+		o += '<div class = "frontimgs">'
 		# count through results and paginate based on current "page"
+		per_row = 4
 		count = 0
 		for r in restaurants:
 			# use counter to show only results between page start and page end
@@ -65,26 +67,32 @@ def restaurants (index=None, page=1, per_page=3):
 			if count >= (per_page*page-per_page) and count < (per_page*page):
 				current_results += 1
 				# restaurant link and image
-				o += '<a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
+				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
+				# restaurant crud operations
+				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
 				# break off a new row after a certain number of results
-				if current_results % 4 == 0:
+				if current_results % per_row == 0:
 					o += '<br>'
 			count += 1
 
-		# row of links to all paginated results
-		o += '</div><div>'
-		# display links for as many pages as count is divisible by paginator
+		o += '</div><br><div>'
+		#
+		# Row of links to all paginated results
+		# Display links for as many pages as count is divisible by paginator
+		# 
 		for p in range (0, int(math.ceil(count/per_page))+1):
 			# build pagination link
 			o += '&nbsp; <a href="%s">page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
 		o += '</div>'
 
-		# basic text list of all restaurants with CRUD options
+		#
+		# Display text list of restaurants
+		# 
 		o += '<ul>'
 		for r in restaurants:
 			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
 		o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
-		# /!\ DANGEROUS database wipe
+		# /!\ DANGEROUS database wipe option
 		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations',city_name=user_city)
 
 	return render_template('main.php',content=o)

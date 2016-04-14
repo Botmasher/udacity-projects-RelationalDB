@@ -12,22 +12,29 @@ ul {
 	padding: 0;
 }
 
-#frontimgs {
+.frontimgs {
 	margin: auto;
 	padding: auto;
-	width: 80%;
+	width: 90%;
+	text-align: center;
 	height: auto;
 	margin-bottom: 0;
 }
+.oneimg {
+	width: 20%;
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+}
 
-#frontimgs img {
+.frontimgs img {
 	width: auto;
 	height: 150px;
 	max-height: 15%;
 	margin: 5 10 5 10;
 }
 @media only screen and (max-width: 500px) {
-	#frontimgs img {
+	.frontimgs img {
 		height: 100px;
 		margin: 3 8 3 8;
 	}
