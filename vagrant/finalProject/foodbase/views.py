@@ -28,11 +28,11 @@ def home():
 
 
 # read routes for restaurants and menu items
-@app.route('/restaurants/') 							# view all restaurants
-@app.route('/restaurants/<int:index>/')					# results broken into pages
-@app.route('/restaurants/<int:page>/<int:per_page>')	# paginate results
-@app.route('/restaurants/<int:index>/menu/') 			# view a restaurant menu
-def restaurants (index=None, page=1, per_page=3, display_all=False):
+@app.route('/restaurants/') 									# view all restaurants
+@app.route('/restaurants/<int:index>/')							# results broken into pages
+@app.route('/restaurants/<int:page>/<int:per_page>/')			# paginate results
+@app.route('/restaurants/<int:index>/menu/') 					# view a restaurant menu
+def restaurants (index=None, page=1, per_page=3):
 
 	# add city variable for switching between markets
 	user_city = 'Kona'
@@ -60,36 +60,48 @@ def restaurants (index=None, page=1, per_page=3, display_all=False):
 		o += '<div class = "frontimgs">'
 		# count through results and paginate based on current "page"
 		per_row = 4
+		# use counter to show only results between page start and page end
 		count = 0
+		# number of results being displayed this page load
+		current_results = 0
 		for r in restaurants:
-			# use counter to show only results between page start and page end
-			current_results = 0 	# number of results being displayed this page load
-			if display_all == False and count >= (per_page*page-per_page) and count < (per_page*page):
-				current_results += 1
+			current_results += 1
+			if count >= (per_page*page-per_page) and count < (per_page*page):
 				# restaurant link and image
 				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
 				# restaurant crud operations
 				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
-				# break off a new row after a certain number of results
-				if current_results % per_row == 0:
-					o += '<br>'
 			# display all restaurants (no pagination)
-			if display_all == True:
+			elif per_page == 0 and page == 0:
 				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
 				# restaurant crud operations
 				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
+			else:
+				pass
+			
 			# count up restaurant number	
 			count += 1
+
+			# break off a new row after a certain number of results
+			if current_results % per_row == 0:
+				o += '<br>'
+				current_results = 0
 
 		o += '</div><br><div>'
 		#
 		# Row of links to all paginated results
-		# Display links for as many pages as count is divisible by paginator
 		# 
-		for p in range (0, int(math.ceil(count/per_page))+1):
-			# build pagination link
-			o += '&nbsp; <a href="%s">page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
-		o += '<a href="%s">ALL</a></div>'%url_for('restaurants',index=None,page=p,per_page=per_page,display_all=True)
+		if per_page != 0:
+			# display links for as many pages as count is divisible by paginator
+			for p in range (0, int(math.ceil(count/per_page))+1):
+				# build pagination link
+				o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
+			# buid link for displaying all restaurants without pagination
+			o += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_page=0)
+		else:
+			# displaying all results
+			# build link for returning to default - pagination
+			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')		
 
 		#
 		# Display text list of restaurants
