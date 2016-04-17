@@ -32,7 +32,7 @@ def home():
 @app.route('/restaurants/<int:index>/')					# results broken into pages
 @app.route('/restaurants/<int:page>/<int:per_page>')	# paginate results
 @app.route('/restaurants/<int:index>/menu/') 			# view a restaurant menu
-def restaurants (index=None, page=1, per_page=3):
+def restaurants (index=None, page=1, per_page=3, display_all=False):
 
 	# add city variable for switching between markets
 	user_city = 'Kona'
@@ -64,7 +64,7 @@ def restaurants (index=None, page=1, per_page=3):
 		for r in restaurants:
 			# use counter to show only results between page start and page end
 			current_results = 0 	# number of results being displayed this page load
-			if count >= (per_page*page-per_page) and count < (per_page*page):
+			if display_all == False and count >= (per_page*page-per_page) and count < (per_page*page):
 				current_results += 1
 				# restaurant link and image
 				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
@@ -73,6 +73,12 @@ def restaurants (index=None, page=1, per_page=3):
 				# break off a new row after a certain number of results
 				if current_results % per_row == 0:
 					o += '<br>'
+			# display all restaurants (no pagination)
+			if display_all == True:
+				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
+				# restaurant crud operations
+				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
+			# count up restaurant number	
 			count += 1
 
 		o += '</div><br><div>'
@@ -83,7 +89,7 @@ def restaurants (index=None, page=1, per_page=3):
 		for p in range (0, int(math.ceil(count/per_page))+1):
 			# build pagination link
 			o += '&nbsp; <a href="%s">page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
-		o += '</div>'
+		o += '<a href="%s">ALL</a></div>'%url_for('restaurants',index=None,page=p,per_page=per_page,display_all=True)
 
 		#
 		# Display text list of restaurants
