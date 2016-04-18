@@ -28,11 +28,11 @@ def home():
 
 
 # read routes for restaurants and menu items
-@app.route('/restaurants/') 									# view all restaurants
-@app.route('/restaurants/<int:index>/')							# results broken into pages
-@app.route('/restaurants/<int:page>/<int:per_page>/')			# paginate results
-@app.route('/restaurants/<int:index>/menu/') 					# view a restaurant menu
-def restaurants (index=None, page=1, per_page=3):
+@app.route('/restaurants/') 						# view all restaurants
+@app.route('/restaurants/<int:index>/')				# results broken into pages
+@app.route('/restaurants/<int:page>/<int:per_pg>/')	# paginate results
+@app.route('/restaurants/<int:index>/menu/') 		# view a restaurant menu
+def restaurants (index=None, page=1, per_pg=3):
 
 	# add city variable for switching between markets
 	user_city = 'Kona'
@@ -66,13 +66,13 @@ def restaurants (index=None, page=1, per_page=3):
 		current_results = 0
 		for r in restaurants:
 			current_results += 1
-			if count >= (per_page*page-per_page) and count < (per_page*page):
+			if count >= (per_pg*page-per_pg) and count < (per_pg*page):
 				# restaurant link and image
 				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
 				# restaurant crud operations
 				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
 			# display all restaurants (no pagination)
-			elif per_page == 0 and page == 0:
+			elif per_pg == 0 and page == 0:
 				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
 				# restaurant crud operations
 				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
@@ -91,13 +91,13 @@ def restaurants (index=None, page=1, per_page=3):
 		#
 		# Row of links to all paginated results
 		# 
-		if per_page != 0:
+		if per_pg != 0:
 			# display links for as many pages as count is divisible by paginator
-			for p in range (0, int(math.ceil(count/per_page))+1):
+			for p in range (0, int(math.ceil(count/per_pg))+1):
 				# build pagination link
-				o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_page=per_page), p+1)
+				o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_pg=per_pg), p+1)
 			# buid link for displaying all restaurants without pagination
-			o += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_page=0)
+			o += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_pg=0)
 		else:
 			# displaying all results
 			# build link for returning to default - pagination
@@ -242,6 +242,7 @@ def delete(table,index):
 		<button>No!</button></form>' % url_for('home')
 
 	return render_template('main.php', content=o)
+
 
 @app.route('/<table>/<int:index>/JSON/')
 @app.route('/<table>/JSON/')

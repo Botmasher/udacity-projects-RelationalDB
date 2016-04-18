@@ -1,4 +1,4 @@
-	body {
+body {
 	font-family: Helvetica, Garamond, sans-serif;
 	width: 100%;
 }
@@ -21,23 +21,19 @@ ul {
 	margin-bottom: 0;
 }
 .oneimg {
-	width: 20%;
 	margin: 0;
 	padding: 0;
 	display: inline-block;
 }
+@media only screen and (max-width: 600px) {
+	.oneimg {
+		display: block;
+	}
+}
 
 .frontimgs img {
-	width: auto;
-	height: 150px;
-	max-height: 15%;
 	margin: 5 10 5 10;
-}
-@media only screen and (max-width: 500px) {
-	.frontimgs img {
-		height: 100px;
-		margin: 3 8 3 8;
-	}
+	width: 200px;
 }
 
 .container {
@@ -54,12 +50,12 @@ ul {
 	text-align: center;
 	margin-bottom: 0px;
 }
-@media only screen and (max-width: 500px) {
+/*@media only screen and (max-width: 500px) {
 	.logo {
 		text-align: justify;
 		margin-left: 10%;
 	}
-}
+}*/
 
 .logo-box {
 	display: inline;
