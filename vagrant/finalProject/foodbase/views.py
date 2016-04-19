@@ -101,7 +101,11 @@ def restaurants (index=None, page=1, per_pg=3):
 		else:
 			# displaying all results
 			# build link for returning to default - pagination
-			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')		
+			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
+
+		# test ajax call to pass data to static/loadentries.js and display here
+		o += '<a href="" id="testAjax">TEST AJAX, cLOWN!</a>'
+		o += '<div id="print_ajax_here"></div>'
 
 		#
 		# Display text list of restaurants
@@ -141,7 +145,6 @@ def add(table):
 		
 	# GET display form for adding restaurant
 	return render_template ('form.php', form=form, content='')
-
 
 @app.route('/update/<table>/<int:index>/', methods=['GET','POST'])
 def update(table,index):

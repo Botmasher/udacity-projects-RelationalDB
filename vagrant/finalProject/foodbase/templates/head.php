@@ -4,6 +4,8 @@
 	<link href="/static/styles.css" rel="stylesheet">
 	<link href="/static/bootstrap-theme.min.css" rel="stylesheet">
 	<link href="/static/bootstrap.min.css" rel="stylesheet">
+	<script src="/static/jquery.min.js"></script>
+	<script src="/static/loadentries.js"></script>
 </head>
 <body>
 	<section class>
