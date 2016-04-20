@@ -57,7 +57,7 @@ def restaurants (index=None, page=1, per_pg=3):
 		#
 		# Display image grid
 		#
-		o += '<div class = "frontimgs">'
+		o += '<div id = "imgGrid"><div class = "frontimgs">'
 		# count through results and paginate based on current "page"
 		per_row = 4
 		# use counter to show only results between page start and page end
@@ -87,7 +87,7 @@ def restaurants (index=None, page=1, per_pg=3):
 				o += '<br>'
 				current_results = 0
 
-		o += '</div><br><div>'
+		o += '</div></div><br><div>'
 		#
 		# Row of links to all paginated results
 		# 
@@ -104,7 +104,7 @@ def restaurants (index=None, page=1, per_pg=3):
 			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
 
 		# test ajax call to pass data to static/loadentries.js and display here
-		o += '<a href="" id="testAjax">TEST AJAX, cLOWN!</a>'
+		o += '<a href="" id="testAjax" name="%s-%s">TEST AJAX, cLOWN!</a>'%(page,per_pg)
 		o += '<div id="print_ajax_here"></div>'
 
 		#
