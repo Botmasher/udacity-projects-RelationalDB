@@ -57,7 +57,7 @@ def restaurants (index=None, page=1, per_pg=3):
 		#
 		# Display image grid
 		#
-		o += '<div id = "imgGrid"><div class = "frontimgs">'
+		o += '<div class = "frontimgs">'
 		# count through results and paginate based on current "page"
 		per_row = 4
 		# use counter to show only results between page start and page end
@@ -87,15 +87,22 @@ def restaurants (index=None, page=1, per_pg=3):
 				o += '<br>'
 				current_results = 0
 
-		o += '</div></div><br><div>'
+		o += '</div><br><div>'
 		#
 		# Row of links to all paginated results
 		# 
 		if per_pg != 0:
 			# display links for as many pages as count is divisible by paginator
 			for p in range (0, int(math.ceil(count/per_pg))+1):
+				
 				# build pagination link
-				o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_pg=per_pg), p+1)
+				
+				## STATIC LINKS ##
+				#o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_pg=per_pg), p+1)
+				
+				## Ajax loadentries loaded from /static/loadentries.js
+				o += '&nbsp; <a href="" class="loadentries" name="%s-%s">Page %s</a> &nbsp;' % (p+1, per_pg, p+1)
+			
 			# buid link for displaying all restaurants without pagination
 			o += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_pg=0)
 		else:
@@ -104,8 +111,7 @@ def restaurants (index=None, page=1, per_pg=3):
 			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
 
 		# test ajax call to pass data to static/loadentries.js and display here
-		o += '<a href="" id="testAjax" name="%s-%s">TEST AJAX, cLOWN!</a>'%(page,per_pg)
-		o += '<div id="print_ajax_here"></div>'
+
 
 		#
 		# Display text list of restaurants
