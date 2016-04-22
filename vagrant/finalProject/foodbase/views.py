@@ -83,9 +83,9 @@ def restaurants (index=None, page=1, per_pg=3):
 			count += 1
 
 			# break off a new row after a certain number of results
-			if current_results % per_row == 0:
-				o += '<br>'
-				current_results = 0
+			# if current_results % per_row == 0:
+			# 	o += '<br>'
+			# 	current_results = 0
 
 		o += '</div><br><div>'
 		#

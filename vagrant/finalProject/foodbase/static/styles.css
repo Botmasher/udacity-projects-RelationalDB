@@ -12,29 +12,39 @@ ul {
 	padding: 0;
 }
 
+
+/**
+ * 	Image Display Grid
+ */
+
+ /* block around all imgs */
 .frontimgs {
 	margin: auto;
 	padding: auto;
-	width: 90%;
+	width: 70%;
 	text-align: center;
-	height: auto;
-	margin-bottom: 0;
 }
+/* block around individual img */
 .oneimg {
-	margin: 0;
-	padding: 0;
+	height: 150px;
 	display: inline-block;
+	margin: 0px 10px 40px 10px;
 }
+/* individual img */
+.frontimgs img {
+	height: 150px;
+}
+/* downsizing for small screens */
 @media only screen and (max-width: 600px) {
 	.oneimg {
-		display: block;
+		display: inline-block;
+		height: 100px;
+	}
+	.frontimgs img {
+		height: 100px;
 	}
 }
 
-.frontimgs img {
-	margin: 5 10 5 10;
-	width: 200px;
-}
 
 .container {
 }
