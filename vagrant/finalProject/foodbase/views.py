@@ -58,39 +58,43 @@ def restaurants (index=None, page=1, per_pg=3):
 		# Display image grid
 		#
 		o += '<div class = "frontimgs">'
-		# count through results and paginate based on current "page"
-		per_row = 4
+
 		# use counter to show only results between page start and page end
 		count = 0
-		# number of results being displayed this page load
-		current_results = 0
+		# remember results to print to webpage
+		results_store = {}
+
 		for r in restaurants:
-			current_results += 1
+			# count through and remember results based on pagination variables
 			if count >= (per_pg*page-per_pg) and count < (per_pg*page):
-				# restaurant link and image
-				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
-				# restaurant crud operations
-				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
-			# display all restaurants (no pagination)
+				results_store[r.id] = [r.name, r.image]
+			# display all restaurants without calculating pagination
 			elif per_pg == 0 and page == 0:
-				o += '<div class="oneimg"><a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r.id), r.image, r.name)
-				# restaurant crud operations
-				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></div>'%(url_for('update', table='Restaurant', index=r.id), url_for('delete', table='Restaurant', index=r.id))
+				results_store[r.id] = [r.name, r.image]
+			# do not remember this restaurant (complement to first branch)
 			else:
 				pass
-			
-			# count up restaurant number	
+			# count up restaurant number to compare for pagination
 			count += 1
 
-			# break off a new row after a certain number of results
-			# if current_results % per_row == 0:
-			# 	o += '<br>'
-			# 	current_results = 0
+		# display image and crud links for each restaurant
+		for r_id in results_store:
+			# display restaurant image
+			o += '<div class ="oneimg">'
+			o += '<a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r_id), results_store[r_id][1], results_store[r_id][0])
+			o += '<br>'
+			# display and format update and delete links
+			o += '<a href="%s">edit</a> &nbsp;&nbsp; ' 	\
+				 	% (url_for('update', table='Restaurant', index=r_id))
+			o += '<a href="%s">delete</a>' 				\
+					% (url_for('delete', table='Restaurant', index=r_id))
+			o += '</div>'	# end single image (class "oneimg")
 
-		o += '</div><br><div>'
+		o += '</div>' 		# end image grid (class "frontimgs")
 		#
 		# Row of links to all paginated results
 		# 
+		o += '<div class = "pagination-links">'
 		if per_pg != 0:
 			# display links for as many pages as count is divisible by paginator
 			for p in range (0, int(math.ceil(count/per_pg))+1):
@@ -109,9 +113,6 @@ def restaurants (index=None, page=1, per_pg=3):
 			# displaying all results
 			# build link for returning to default - pagination
 			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
-
-		# test ajax call to pass data to static/loadentries.js and display here
-
 
 		#
 		# Display text list of restaurants
@@ -256,6 +257,7 @@ def delete(table,index):
 @app.route('/<table>/<int:index>/JSON/')
 @app.route('/<table>/JSON/')
 def json_api(table,index=None):
+	# serialize JSON results for requested entities
 	if table == 'Restaurant' or table == 'restaurant':
 		if index != None:
 			data = session.query(Restaurant).filter_by(id=index).one()
@@ -277,7 +279,7 @@ def json_api(table,index=None):
 
 @app.route('/repopulateRelations/<city_name>',methods=['GET','POST'])
 def repopulateRelations(city_name):
-
+	'''Replace all data in the database with restaurants from the requested city'''
 	if request.method == 'POST':
 		
 		# clean out current items in db

@@ -5,7 +5,7 @@ $(function () {
 		$.getJSON("/Restaurant/JSON/", function(data) {
 
 			// prepare array to store json entries while iterating
-			var listItems = [];
+			var imageList = [];
 
 			// break down clicked url for paginated results
 			var urlName = el.target.name;
@@ -28,13 +28,13 @@ $(function () {
 					// display expected db index results for this page
 					if (counter >= startIndex && counter <= endIndex) {
 						// use keys to display image and build link
-						listItems.push("<div class='oneimg'><a href='/restaurants/" + data[i][j]["id"] + "/menu/'><img src='" + data[i][j]["image"] + "'></a></div>");
+						imageList.push("<div class='oneimg'><a href='/restaurants/" + data[i][j]["id"] + "/menu/'><img src='" + data[i][j]["image"] + "'></a><br><a href='/update/Restaurant/" + data[i][j]["id"] + "/'>edit</a> &nbsp;&nbsp; <a href='/delete/Restaurant/" + data[i][j]["id"] + "/'>delete</a></div>");
 					}
 				}
 			}
 
 			// use array to build replacement image grid
-			var imgGrid = $("<div/>",{"class":"frontimgs", html:listItems.join("")});
+			var imgGrid = $("<div/>",{"class":"frontimgs", html:imageList.join("")});
 			// replace current image grid with this image grid
 			$("div.frontimgs").replaceWith(imgGrid);
 		});
