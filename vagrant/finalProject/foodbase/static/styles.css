@@ -33,6 +33,7 @@ ul {
 /* individual restaurant name and img */
 .oneimg h3 {
 	font-size: 20px;
+	margin-bottom: 0px;
 }
 .oneimg img {
 	height: 150px;
@@ -71,7 +72,7 @@ ul {
 .header {
 }
 
-.logo {
+.logo-section .logo {
 	margin-top: 10px;
 	color: orange;
 	font-family: Optima, Futura, Helvetica, serif;
@@ -79,18 +80,21 @@ ul {
 	text-align: center;
 	margin-bottom: 0px;
 }
-/*@media only screen and (max-width: 500px) {
-	.logo {
-		text-align: justify;
-		margin-left: 10%;
-	}
-}*/
 
-.logo-box {
+
+.logo-section .logo-box {
 	display: inline;
 	padding: 0 22 0 22;
 	border-radius: 15px;
 	background-color: orange;
+}
+
+.logo-section h2 {
+	font-size: 18px;
+}
+
+.logo-link:link, .logo-link:active, .logo-link:hover, .logo-link:visited {
+	text-decoration: none;
 }
 
 .menu-item, .menu-login {

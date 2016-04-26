@@ -25,7 +25,7 @@
 		  <p><input type="submit" value="Submit"></p>
 		</form>
 
-		<p>{% if content %}{{ content }}{% endif %}</p>
+		{% if content %}{{ content }}{% endif %}
 
 	</section>
 

@@ -21,9 +21,21 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# target market with null initial value
+user_city = None
 
-@app.route('/')
+
+@app.route('/', methods=['GET','POST'])
 def home():
+	# change city request is sent here
+	if request.method == 'POST':
+		global user_city 		# reference to the global variable
+		# pick out the market name from form built in select-market.js
+		user_city = request.form['market-name']
+		# go to post method for API call to restaurants JSON and rebuild db
+		return redirect(url_for('repopulateRelations'), code=307)
+	
+	# just send to main restaurants list
 	return redirect(url_for('restaurants'))
 
 
@@ -34,8 +46,20 @@ def home():
 @app.route('/restaurants/<int:index>/menu/') 		# view a restaurant menu
 def restaurants (index=None, page=1, per_pg=6):
 
-	# add city variable for switching between markets
-	user_city = 'Kona'
+	# set a default city market for testing
+	global user_city 		# reference to the global variable
+
+	if user_city == None:
+		# currently sets the city to market in db (last selected)
+		# BUILD: get market based on user location
+		if session.query(Restaurant).first() != None:
+			user_city = session.query(Restaurant).first().city
+		# set a default city for cases where db is empty
+		else:
+			user_city = 'Your City!'
+
+	# use city to set city variable
+
 
 	# browse menu items for a single restaurant
 	if index != None:
@@ -50,14 +74,13 @@ def restaurants (index=None, page=1, per_pg=6):
 	
 	# browse all restaurants
 	else:
-		# Query and title
+		# Query for restaurants
 		restaurants = session.query(Restaurant).all()
-		o = '%s'%'<h2>Our ring of restaurants</h2>'
 
 		#
 		# Display image grid
 		#
-		o += '<div class = "frontimgs">'
+		o = '<div class = "frontimgs">'
 
 		# use counter to show only results between page start and page end
 		count = 0
@@ -125,12 +148,9 @@ def restaurants (index=None, page=1, per_pg=6):
 		# o += '</ul>' # close restaurant list
 
 		# /!\ CAUTION allow adding a restaurant to the db
-		o += '<p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+		o += '<br><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
 
-		# /!\ DANGEROUS database wipe option
-		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations',city_name=user_city)
-
-	return render_template('main.php',content=o)
+	return render_template('main.php',market=user_city, content=o)
 
 
 @app.route('/add/<table>/', methods=['GET','POST'])
@@ -157,7 +177,8 @@ def add(table):
 		return redirect (url_for('home'))
 		
 	# GET display form for adding restaurant
-	return render_template ('form.php', form=form, content='')
+	return render_template ('form.php', market=user_city, form=form, content='')
+
 
 @app.route('/update/<table>/<int:index>/', methods=['GET','POST'])
 def update(table,index):
@@ -226,7 +247,7 @@ def update(table,index):
 	else:
 		# if user requests other update forms
 		flash ('I couldn\'t update that. Please try to update a /Restaurant or a /MenuItem instead!')
-	return render_template('form.php', form=form, content='')
+	return render_template('form.php', market=user_city, form=form, content='')
 
 
 @app.route('/delete/<table>/<int:index>/', methods=['GET','POST'])
@@ -257,7 +278,7 @@ def delete(table,index):
 	o += '<form action="%s" method="GET">\
 		<button>No!</button></form>' % url_for('home')
 
-	return render_template('main.php', content=o)
+	return render_template('main.php', market=user_city, content=o)
 
 
 @app.route('/<table>/<int:index>/JSON/')
@@ -283,27 +304,37 @@ def json_api(table,index=None):
 		return redirect (url_for('home'))
 
 
-@app.route('/repopulateRelations/<city_name>',methods=['GET','POST'])
-def repopulateRelations(city_name):
+@app.route('/repopulateRelations/',methods=['GET','POST'])
+def repopulateRelations():
 	'''Replace all data in the database with restaurants from the requested city'''
-	if request.method == 'POST':
-		
-		# clean out current items in db
-		session.query(Restaurant).delete()
-		session.query(MenuItem).delete()
+	# reference to city market
+	global user_city
 
-		# grab data from API
-		jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=%s'%city_name)
+	if request.method == 'POST':
+
+		# grab data from API for this market
+		jsonRestaurants = requests.get ('http://opentable.herokuapp.com/api/restaurants?city=%s'%user_city)
 		jsonRestaurants = json.loads (jsonRestaurants.text)
 		restaurant_list = jsonRestaurants['restaurants']
 
-		# create new restaurant objects and add to relation 
-		for r in restaurant_list:
-			new_r = Restaurant(name=r['name'], address=r['address'], city=r['city'],state=r['state'], zipCode=r['postal_code'], website=r['reserve_url'], image=r['image_url'])
-			session.add (new_r)
+		# do not update the db if API has no results for this market
+		if len(restaurant_list) < 1:
+			# reset user city back to previous value
+			user_city = None
 
-		session.commit()
-		flash('You successfully wiped and repopulated FoodBase')
+		# reset db with restaurants for this market
+		else:
+			# clean out current items in db
+			session.query(Restaurant).delete()
+			session.query(MenuItem).delete()
+
+			# iterate through restaurants and add to db
+			for r in restaurant_list:
+				new_r = Restaurant(name=r['name'], address=r['address'], city=r['city'],state=r['state'], zipCode=r['postal_code'], website=r['reserve_url'], image=r['image_url'])
+				session.add (new_r)
+
+			session.commit()
+
 		return redirect (url_for('home'))
 
 	# GET - warn that user is about to reset the whole db
@@ -312,4 +343,4 @@ def repopulateRelations(city_name):
 		o += '<form action="" method="POST">\
 			  <button>Yes</button></form>'
 		o += '<p><a href="%s">Not yet.</a></p>'%url_for('home')
-	return render_template('main.php',content=o)
+	return render_template('main.php', market=user_city, content=o)
