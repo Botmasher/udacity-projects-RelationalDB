@@ -28,7 +28,7 @@ $(function () {
 					// display expected db index results for this page
 					if (counter >= startIndex && counter <= endIndex) {
 						// use keys to display image and build link
-						imageList.push("<div class='oneimg'><a href='/restaurants/" + data[i][j]["id"] + "/menu/'><img src='" + data[i][j]["image"] + "'></a><br><a href='/update/Restaurant/" + data[i][j]["id"] + "/'>edit</a> &nbsp;&nbsp; <a href='/delete/Restaurant/" + data[i][j]["id"] + "/'>delete</a></div>");
+						imageList.push("<div class='oneimg'><a href='/restaurants/" + data[i][j]["id"] + "/menu/'><h3>" + data[i][j]["name"].substring(0,16) + "...</h3><img src='" + data[i][j]["image"] + "'></a><br><a href='/update/Restaurant/" + data[i][j]["id"] + "/'>edit</a> &nbsp;&nbsp; <a href='/delete/Restaurant/" + data[i][j]["id"] + "/'>delete</a></div>");
 					}
 				}
 			}

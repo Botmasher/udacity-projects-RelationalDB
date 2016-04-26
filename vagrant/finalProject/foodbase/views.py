@@ -32,7 +32,7 @@ def home():
 @app.route('/restaurants/<int:index>/')				# results broken into pages
 @app.route('/restaurants/<int:page>/<int:per_pg>/')	# paginate results
 @app.route('/restaurants/<int:index>/menu/') 		# view a restaurant menu
-def restaurants (index=None, page=1, per_pg=3):
+def restaurants (index=None, page=1, per_pg=6):
 
 	# add city variable for switching between markets
 	user_city = 'Kona'
@@ -79,9 +79,10 @@ def restaurants (index=None, page=1, per_pg=3):
 
 		# display image and crud links for each restaurant
 		for r_id in results_store:
-			# display restaurant image
+			# display restaurant image and restaurant name with link
 			o += '<div class ="oneimg">'
-			o += '<a href="%s"><img src="%s" alt="%s"></a>' % (url_for('restaurants', index=r_id), results_store[r_id][1], results_store[r_id][0])
+			o += '<a href="%s"><h3>%s</h3><img src="%s" alt="%s"></a>'	\
+				 	% (url_for('restaurants', index=r_id), results_store[r_id][0][:16]+'...', results_store[r_id][1], results_store[r_id][0])
 			o += '<br>'
 			# display and format update and delete links
 			o += '<a href="%s">edit</a> &nbsp;&nbsp; ' 	\
@@ -114,13 +115,18 @@ def restaurants (index=None, page=1, per_pg=3):
 			# build link for returning to default - pagination
 			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
 
-		#
-		# Display text list of restaurants
-		# 
-		o += '<ul>'
-		for r in restaurants:
-			o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
-		o += '</ul><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+		# #
+		# # Display plain text list of restaurant names with links
+		# #
+		# o += '<ul>' # open restaurant list
+		
+		# for r in restaurants:
+		# 	o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
+		# o += '</ul>' # close restaurant list
+
+		# /!\ CAUTION allow adding a restaurant to the db
+		o += '<p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+
 		# /!\ DANGEROUS database wipe option
 		o += '<p><a href="%s">/!\\ Reset this APP /!\\</p>'%url_for('repopulateRelations',city_name=user_city)
 

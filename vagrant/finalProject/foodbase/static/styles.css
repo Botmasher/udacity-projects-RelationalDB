@@ -28,20 +28,39 @@ ul {
 .oneimg {
 	height: 150px;
 	display: inline-block;
-	margin: 0px 10px 40px 10px;
+	margin: 2px 20px 100px 20px;
 }
-/* individual img */
-.frontimgs img {
+/* individual restaurant name and img */
+.oneimg h3 {
+	font-size: 20px;
+}
+.oneimg img {
 	height: 150px;
 }
 /* downsizing for small screens */
 @media only screen and (max-width: 600px) {
+	.oneimg h3 {
+		font-size: 14px;
+	}
 	.oneimg {
-		display: inline-block;
+		height: 100px;
+		margin: 0px 10px 80px 10px;
+	}
+	.oneimg img {
 		height: 100px;
 	}
-	.frontimgs img {
-		height: 100px;
+}
+/* constraining for large screens */
+@media only screen and (min-width: 1200px) {
+	.frontimgs {
+		width: 50%;
+	}
+	.oneimg {
+		height: 175px;
+		margin: 3px 25px 109px 25px;
+	}
+	.oneimg img {
+		height: 175px;
 	}
 }
 
