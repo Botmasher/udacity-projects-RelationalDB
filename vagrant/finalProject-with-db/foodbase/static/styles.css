@@ -1,0 +1,116 @@
+body {
+	font-family: Helvetica, Garamond, sans-serif;
+	width: 100%;
+}
+
+p, section {
+	text-align: center;
+}
+
+ul {
+	list-style-type: none;
+	padding: 0;
+}
+
+
+/**
+ * 	Image Display Grid
+ */
+
+ /* block around all imgs */
+.frontimgs {
+	margin: auto;
+	padding: auto;
+	width: 70%;
+	text-align: center;
+}
+/* block around individual img */
+.oneimg {
+	height: 150px;
+	display: inline-block;
+	margin: 2px 20px 100px 20px;
+}
+/* individual restaurant name and img */
+.oneimg h3 {
+	font-size: 20px;
+	margin-bottom: 0px;
+}
+.oneimg img {
+	height: 150px;
+}
+/* downsizing for small screens */
+@media only screen and (max-width: 600px) {
+	.oneimg h3 {
+		font-size: 14px;
+	}
+	.oneimg {
+		height: 100px;
+		margin: 0px 10px 80px 10px;
+	}
+	.oneimg img {
+		height: 100px;
+	}
+}
+/* constraining for large screens */
+@media only screen and (min-width: 1200px) {
+	.frontimgs {
+		width: 50%;
+	}
+	.oneimg {
+		height: 175px;
+		margin: 3px 25px 109px 25px;
+	}
+	.oneimg img {
+		height: 175px;
+	}
+}
+
+
+.container {
+}
+
+.header {
+}
+
+.logo-section .logo {
+	margin-top: 10px;
+	color: orange;
+	font-family: Optima, Futura, Helvetica, serif;
+	font-size: 52px;
+	text-align: center;
+	margin-bottom: 0px;
+}
+
+
+.logo-section .logo-box {
+	display: inline;
+	padding: 0 22 0 22;
+	border-radius: 15px;
+	background-color: orange;
+}
+
+.logo-section h2 {
+	font-size: 18px;
+}
+
+.logo-link:link, .logo-link:active, .logo-link:hover, .logo-link:visited {
+	text-decoration: none;
+}
+
+.menu-item, .menu-login {
+	padding-top: 3%;
+}
+
+.menu-item {
+	font-size: 20px;
+}
+
+.main {
+	text-align: center;
+	line-height: 1.8em;
+}
+
+.footer {
+	text-align: center;
+	margin-top: 10%;
+}
