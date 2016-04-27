@@ -15,7 +15,7 @@ $(function () {
 			var resultsPerPage = parseInt(urlName.split("-")[1]);
 
 			// calculate first and last db entries to display
-			var startIndex = ((pageNumber-1) * resultsPerPage) + 1;
+			var startIndex = (pageNumber * resultsPerPage) - resultsPerPage;
 			var endIndex = pageNumber * resultsPerPage;
 
 			var counter = 0; 	// keep track of how many entries so far
@@ -24,7 +24,9 @@ $(function () {
 			for (var i in data) {
 				// iterate through entries
 				for (var j in data[i]) {
+					
 					counter ++;
+
 					// display expected db index results for this page
 					if (counter >= startIndex && counter <= endIndex) {
 						// use keys to display image and build link

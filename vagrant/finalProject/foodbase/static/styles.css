@@ -1,6 +1,7 @@
 body {
 	font-family: Helvetica, Garamond, sans-serif;
 	width: 100%;
+	position: relative;
 }
 
 p, section {
@@ -17,13 +18,42 @@ ul {
  * 	Image Display Grid
  */
 
- /* block around all imgs */
+/* side arrows */
+.grid-arrow {
+	width: 14%;
+	float: left;
+	text-align: center;
+}
+.grid-arrow div {
+	height: 40%;
+	border-radius: 25px;
+	width: 50%;
+	font-size: 70px;
+	background-color: #DDDDDD;
+}
+.grid-arrow .left {
+	margin-left: 50%;
+}
+.grid-arrow .right {
+	margin-right: 40%;
+}
+.arrow-links:link, .arrow-links:active, .arrow-links:hover, .arrow-links:visited {
+	text-decoration: none;
+	color: white;
+}
+
+/* block around all imgs */
 .frontimgs {
-	margin: auto;
-	padding: auto;
+	float: left;
 	width: 70%;
 	text-align: center;
 }
+
+/* pagination links below img grid */
+.pagination-links {
+	clear: both;
+}
+
 /* block around individual img */
 .oneimg {
 	height: 150px;
@@ -41,21 +71,28 @@ ul {
 /* downsizing for small screens */
 @media only screen and (max-width: 600px) {
 	.oneimg h3 {
-		font-size: 14px;
+		font-size: 12px;
 	}
 	.oneimg {
-		height: 100px;
+		height: 90px;
 		margin: 0px 10px 80px 10px;
 	}
 	.oneimg img {
-		height: 100px;
+		height: 90px;
+	}
+	.grid-arrow div {
+		padding-top: 40px;
+		border-radius: 20px;
+		width: 50%;
+		height: 200px;
+		font-size: 40px;
 	}
 }
 /* constraining for large screens */
 @media only screen and (min-width: 1200px) {
-	.frontimgs {
+/*	.frontimgs {
 		width: 50%;
-	}
+	}*/
 	.oneimg {
 		height: 175px;
 		margin: 3px 25px 109px 25px;

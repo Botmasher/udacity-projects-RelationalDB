@@ -44,7 +44,7 @@ def home():
 @app.route('/restaurants/<int:index>/')				# results broken into pages
 @app.route('/restaurants/<int:page>/<int:per_pg>/')	# paginate results
 @app.route('/restaurants/<int:index>/menu/') 		# view a restaurant menu
-def restaurants (index=None, page=1, per_pg=6):
+def restaurants (index=None, page=1, per_pg=5):
 
 	# set a default city market for testing
 	global user_city 		# reference to the global variable
@@ -58,14 +58,14 @@ def restaurants (index=None, page=1, per_pg=6):
 		else:
 			user_city = 'Your City!'
 
-	# use city to set city variable
-
+	# output text that will be filled in and added to template content
+	o = ''
 
 	# browse menu items for a single restaurant
 	if index != None:
 		r = session.query(Restaurant).filter_by(id=index)[0]
 		m = session.query(MenuItem).filter_by(restaurant_id=index)
-		o = '<p>%s - main menu</p>'%r.name
+		o += '<p>%s - main menu</p>'%r.name
 		o += '<ul>'
 		for i in m:
 			o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
@@ -78,9 +78,8 @@ def restaurants (index=None, page=1, per_pg=6):
 		restaurants = session.query(Restaurant).all()
 
 		#
-		# Display image grid
+		# Build image grid
 		#
-		o = '<div class = "frontimgs">'
 
 		# use counter to show only results between page start and page end
 		count = 0
@@ -88,8 +87,10 @@ def restaurants (index=None, page=1, per_pg=6):
 		results_store = {}
 
 		for r in restaurants:
+			# count up restaurant number to compare for pagination
+			count += 1
 			# count through and remember results based on pagination variables
-			if count >= (per_pg*page-per_pg) and count < (per_pg*page):
+			if count >= ((per_pg * page)-per_pg) and count <= (per_pg*page):
 				results_store[r.id] = [r.name, r.image]
 			# display all restaurants without calculating pagination
 			elif per_pg == 0 and page == 0:
@@ -97,46 +98,59 @@ def restaurants (index=None, page=1, per_pg=6):
 			# do not remember this restaurant (complement to first branch)
 			else:
 				pass
-			# count up restaurant number to compare for pagination
-			count += 1
 
 		# display image and crud links for each restaurant
+		grid = ''
 		for r_id in results_store:
 			# display restaurant image and restaurant name with link
-			o += '<div class ="oneimg">'
-			o += '<a href="%s"><h3>%s</h3><img src="%s" alt="%s"></a>'	\
+			grid += '<div class ="oneimg">'
+			grid += '<a href="%s"><h3>%s</h3><img src="%s" alt="%s"></a>'	\
 				 	% (url_for('restaurants', index=r_id), results_store[r_id][0][:16]+'...', results_store[r_id][1], results_store[r_id][0])
-			o += '<br>'
+			grid += '<br>'
 			# display and format update and delete links
-			o += '<a href="%s">edit</a> &nbsp;&nbsp; ' 	\
+			grid += '<a href="%s">edit</a> &nbsp;&nbsp; ' 	\
 				 	% (url_for('update', table='Restaurant', index=r_id))
-			o += '<a href="%s">delete</a>' 				\
+			grid += '<a href="%s">delete</a>' 				\
 					% (url_for('delete', table='Restaurant', index=r_id))
-			o += '</div>'	# end single image (class "oneimg")
+			grid += '</div>'	# end single image (class "oneimg")
 
-		o += '</div>' 		# end image grid (class "frontimgs")
 		#
-		# Row of links to all paginated results
+		# Build row of links to all paginated results
 		# 
-		o += '<div class = "pagination-links">'
-		if per_pg != 0:
+		pagination = '<div class = "pagination-links">'
+		number_of_pages = 0
+		if per_pg > 0:
 			# display links for as many pages as count is divisible by paginator
 			for p in range (0, int(math.ceil(count/per_pg))+1):
 				
+				# keep track of how many pages we have
+				number_of_pages += 1
+
 				# build pagination link
 				
-				## STATIC LINKS ##
-				#o += '&nbsp; <a href="%s">Page %s</a> &nbsp;' % (url_for('restaurants', index=None, page=p+1, per_pg=per_pg), p+1)
-				
 				## Ajax loadentries loaded from /static/loadentries.js
-				o += '&nbsp; <a href="" class="loadentries" name="%s-%s">Page %s</a> &nbsp;' % (p+1, per_pg, p+1)
+				pagination += '&nbsp; <a href="" class="loadentries" name="%s-%s">Page %s</a> &nbsp;' % (p+1, per_pg, p+1)
 			
 			# buid link for displaying all restaurants without pagination
-			o += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_pg=0)
+			pagination += '<a href="%s">View all</a></div>' % url_for('restaurants',index=None,page=0,per_pg=0)
 		else:
 			# displaying all results
 			# build link for returning to default - pagination
-			o += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
+			pagination += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
+
+
+		##
+		## Display Image Grid and Pagination (both calculated and built above)
+		##
+
+		# place image grid on page with fwd and back arrows
+		o += '<a href="%s" class="arrow-links"><div class = "grid-arrow"><div class = "left">&lt;</div></div></a>' % url_for('restaurants', page=max(page-1,1), per_pg=per_pg)
+		o += '<div class = "frontimgs">%s</div>' % grid
+		o += '<a href="%s" class="arrow-links"><div class = "grid-arrow"><div class = "right">&gt;</div></div></a>' % url_for('restaurants', page=min(page+1,number_of_pages), per_pg=per_pg)
+
+		# add pagination links below the grid
+		o += pagination
+
 
 		# #
 		# # Display plain text list of restaurant names with links
