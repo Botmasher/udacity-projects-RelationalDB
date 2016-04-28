@@ -90,7 +90,7 @@ def restaurants (index=None, page=1, per_pg=5):
 			# count up restaurant number to compare for pagination
 			count += 1
 			# count through and remember results based on pagination variables
-			if count >= ((per_pg * page)-per_pg) and count <= (per_pg*page):
+			if count >= ((per_pg * page)-per_pg + 1) and count <= (per_pg*page):
 				results_store[r.id] = [r.name, r.image]
 			# display all restaurants without calculating pagination
 			elif per_pg == 0 and page == 0:
@@ -99,7 +99,7 @@ def restaurants (index=None, page=1, per_pg=5):
 			else:
 				pass
 
-		# display image and crud links for each restaurant
+		# image and crud links for each restaurant
 		grid = ''
 		for r_id in results_store:
 			# display restaurant image and restaurant name with link
@@ -119,12 +119,20 @@ def restaurants (index=None, page=1, per_pg=5):
 		# 
 		pagination = '<div class = "pagination-links">'
 		number_of_pages = 0
+
+		# calculate number of pages
+		if count % per_pg > 0:
+			number_of_pages = (count - (count % per_pg)) / per_pg
+			number_of_pages += 1
+		else:
+			number_of_pages = count / per_pg
+
 		if per_pg > 0:
 			# display links for as many pages as count is divisible by paginator
-			for p in range (0, int(math.ceil(count/per_pg))+1):
+			for p in range (0, number_of_pages):
 				
 				# keep track of how many pages we have
-				number_of_pages += 1
+				#number_of_pages += 1
 
 				# build pagination link
 				
@@ -139,9 +147,9 @@ def restaurants (index=None, page=1, per_pg=5):
 			pagination += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
 
 
-		##
-		## Display Image Grid and Pagination (both calculated and built above)
-		##
+		#
+		# Display Image Grid and Pagination (both calculated and built above)
+		#
 
 		# place image grid on page with fwd and back arrows
 		o += '<a href="%s" class="arrow-links"><div class = "grid-arrow"><div class = "left">&lt;</div></div></a>' % url_for('restaurants', page=max(page-1,1), per_pg=per_pg)

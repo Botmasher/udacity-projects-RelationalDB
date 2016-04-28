@@ -15,7 +15,7 @@ $(function () {
 			var resultsPerPage = parseInt(urlName.split("-")[1]);
 
 			// calculate first and last db entries to display
-			var startIndex = (pageNumber * resultsPerPage) - resultsPerPage;
+			var startIndex = (pageNumber * resultsPerPage) - resultsPerPage + 1;
 			var endIndex = pageNumber * resultsPerPage;
 
 			var counter = 0; 	// keep track of how many entries so far
