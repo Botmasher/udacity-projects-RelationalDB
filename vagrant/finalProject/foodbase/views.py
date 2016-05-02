@@ -15,7 +15,7 @@ from sqlalchemy import create_engine, func, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
 
 # set up connection for db
-from models import Base,Restaurant,MenuItem
+from models import Base, Restaurant, MenuItem
 engine = create_engine ('sqlite:///foodbase/models.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
@@ -44,14 +44,13 @@ def home():
 @app.route('/restaurants/<int:index>/')				# results broken into pages
 @app.route('/restaurants/<int:page>/<int:per_pg>/')	# paginate results
 @app.route('/restaurants/<int:index>/menu/') 		# view a restaurant menu
-def restaurants (index=None, page=1, per_pg=5):
+def restaurants (index=None, page=1, per_pg=4):
 
 	# set a default city market for testing
 	global user_city 		# reference to the global variable
 
 	if user_city == None:
 		# currently sets the city to market in db (last selected)
-		# BUILD: get market based on user location
 		if session.query(Restaurant).first() != None:
 			user_city = session.query(Restaurant).first().city
 		# set a default city for cases where db is empty
@@ -130,9 +129,6 @@ def restaurants (index=None, page=1, per_pg=5):
 		if per_pg > 0:
 			# display links for as many pages as count is divisible by paginator
 			for p in range (0, number_of_pages):
-				
-				# keep track of how many pages we have
-				#number_of_pages += 1
 
 				# build pagination link
 				
@@ -146,7 +142,6 @@ def restaurants (index=None, page=1, per_pg=5):
 			# build link for returning to default - pagination
 			pagination += '<a href="%s">Break results into pages</a></div>' % url_for('restaurants')
 
-
 		#
 		# Display Image Grid and Pagination (both calculated and built above)
 		#
@@ -158,16 +153,6 @@ def restaurants (index=None, page=1, per_pg=5):
 
 		# add pagination links below the grid
 		o += pagination
-
-
-		# #
-		# # Display plain text list of restaurant names with links
-		# #
-		# o += '<ul>' # open restaurant list
-		
-		# for r in restaurants:
-		# 	o += '<li><a href="%s">%s</a> <a href="%s">(edit)</a> <a href="%s">(delete)</a></li>' % (url_for('restaurants', index=r.id), r.name, url_for('update',table='Restaurant',index=r.id), url_for('delete',table='Restaurant',index=r.id))
-		# o += '</ul>' # close restaurant list
 
 		# /!\ CAUTION allow adding a restaurant to the db
 		o += '<br><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
