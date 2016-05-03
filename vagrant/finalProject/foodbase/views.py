@@ -116,17 +116,21 @@ def restaurants (index=None, page=1, per_pg=4):
 		#
 		# Build row of links to all paginated results
 		# 
+
 		pagination = '<div class = "pagination-links">'
 		number_of_pages = 0
-
-		# calculate number of pages
-		if count % per_pg > 0:
-			number_of_pages = (count - (count % per_pg)) / per_pg
-			number_of_pages += 1
-		else:
-			number_of_pages = count / per_pg
-
+		
+		# verify paginatability
+		#  - return all results when results per page is 0 (treat as "infinite")
+		#  - check that results are not 0 to avoid division and modulo errors
 		if per_pg > 0:
+
+			# calculate number of pages
+			if count % per_pg > 0:
+				number_of_pages = (count - (count % per_pg)) / per_pg
+				number_of_pages += 1
+			else:
+				number_of_pages = count / per_pg
 			# display links for as many pages as count is divisible by paginator
 			for p in range (0, number_of_pages):
 
@@ -175,8 +179,10 @@ def add(table):
 	if request.method == 'POST' and form.validate():
 		if table == 'Restaurant':
 			new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+			flash ('New restaurant created!')
 		elif table == 'MenuItem':
 			new_row = MenuItem (name=form.name.data, description=form.description.data, restaurant_id=form.restaurant_id.data)
+			flash ('New menu item created!')
 		else:
 			flash ('Please try to add a /Restaurant/ or a /MenuItem/.')
 		session.add (new_row)
@@ -214,7 +220,6 @@ def update(table,index):
 			mod_row.zipCode = form.zipCode.data
 			mod_row.website = form.website.data
 			mod_row.image = form.image.data
-			flash ('I updated the profile for %s!'%mod_row.name)
 
 		# make edits to a menu item
 		elif table == 'MenuItem' and is_valid:
@@ -222,7 +227,6 @@ def update(table,index):
 			mod_row.name = form.name.data
 			mod_row.description = form.description.data
 			mod_row.restaurant_id = form.restaurant_id.data
-
 		# cannot update the table
 		else:
 			flash ('Help, I couldn\'t add that info to FoodBase! Do you mind checking if you filled out the whole form?')
@@ -263,9 +267,11 @@ def delete(table,index):
 	# delete a restaurant
 	if table == 'Restaurant':
 		mod_row = session.query(Restaurant).filter_by(id=index)[0]
+		flash ('Restaurant deleted!')
 	# delete a menu item
 	elif table == 'MenuItem':
 		mod_row = session.query(MenuItem).filter_by(id=index)[0]
+		flash ('Menu item deleted!')
 	else:
 		flash ('I couldn\'t delete that info from FoodBase!')
 		return redirect (url_for('home'))
@@ -341,6 +347,8 @@ def repopulateRelations():
 				session.add (new_r)
 
 			session.commit()
+
+		flash ('Successfully updated the database with entries from %s' % user_city)
 
 		return redirect (url_for('home'))
 

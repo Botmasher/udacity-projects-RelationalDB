@@ -20,3 +20,18 @@
 		<h2>Restaurants in <a class ="market-link" href="">{{ market }}</a></h2>
 		<div class = "select-market"></div>
 	</section>
+
+	<section>
+		<!-- message flashing -->
+		<div>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+			<ul>
+				{% for message in messages %}
+					<li><strong> {{message}} </strong></li>
+				{% endfor %}
+			</ul>
+			{% endif %}
+		{% endwith %}
+		</div>
+	</section>
