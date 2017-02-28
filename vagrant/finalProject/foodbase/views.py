@@ -1,8 +1,13 @@
 from foodbase import app
 
+import math
+
+# basic framework render, req handling, endpoints and messaging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-import math
+# added to support OAuth 2
+from flask import session as login_session
+import random, string
 
 # /!\ read up on json and requests - used here to handle API
 import json, requests
@@ -359,3 +364,12 @@ def repopulateRelations():
 			  <button>Yes</button></form>'
 		o += '<p><a href="%s">Not yet.</a></p>'%url_for('home')
 	return render_template('main.php', market=user_city, content=o)
+
+
+# Generate Anti-Forgery State Token
+# Added to handle OAuth 2 - new state val on each visit to login endpoint
+@app.route('/login')
+def showLogin():
+	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+	login_session['state'] = state
+	return "Current session state: %s" % login_session['state']
