@@ -19,6 +19,41 @@
 		</span>
 	</div>
 	<div id = "result"></div>
-</body>
 
+<script>
+function signinCallback (authRes) {
+	// if param called 'code', G auth was successful
+	if (authRes['code']) {
+		// Hide the G signin button
+		$('#signinButton').attr('style', 'display: none');
+		// ajax call passing the one-time code onto the server
+		$.ajax({
+			type: 'POST',
+			// remember to define gconnect route on our server
+			// send state var to use our check against x-site ref forgery
+			url: '/gconnect?state={{STATE}}',
+			// tell jQuery not to process the result into str
+			processData: false,
+			// octet-stream is arbitrary binary stream of data
+			contentType: 'application/octet-stream; charset=utf-8',
+			data: authRes['code'],
+			// 200 code response - log user into app
+			success: function(res) {
+				if (res) {
+					// populate above empty div with response
+					$('#result').html('Login successful!<br>'+res+'<br>Redirecting...');
+					setTimeout (function() {
+						window.location.href = '/';
+					}, 3000);
+				}
+			}
+		});
+	} else if (authRes['error']) {
+		console.log ('G signin error: ' + authRes['error']);
+	} else {
+		$('#result').html('Failed to make a server-side call. Please check your configuration and console.');
+	}
+}
+</script>
+</body>
 </html>

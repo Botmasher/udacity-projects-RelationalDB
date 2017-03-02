@@ -5,15 +5,30 @@ import math
 # basic framework render, req handling, endpoints and messaging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-# added to support OAuth 2
-from flask import session as login_session
-import random, string
-
 # /!\ read up on json and requests - used here to handle API
 import json, requests
 
 # get my WTForms classes from forms.py
 from forms import LoginForm, RestaurantForm, MenuItemForm
+
+# added to support OAuth 2
+from flask import session as login_session
+import random, string
+# see gconnect() below for example of these imports in action
+# create flow obj from json client id, client secret and other OAuth2 params
+from oauth2client.client import flow_from_clientsecrets
+# method for errors when trying to exchange one-time code for authorization token
+from oauth2client.client import FlowExchangeError
+# comprehensive http client library in Python
+# also import JSON for this - already done below for a separate task
+import httplib2
+# turn return val from function into a real response obj to send off to client
+from flask import make_response
+# Apache 2 licensed http lib similar to urllib but with improvements
+import requests
+
+# load JSON file downloaded from console.developers.google.com
+CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
 # sql functionality
 from sqlalchemy import create_engine, func, distinct, asc, desc
@@ -374,3 +389,82 @@ def showLogin():
 	login_session['state'] = state
 	print ("Current session state: %s" % login_session['state'])
 	return render_template('login.php')
+
+
+# server-side route for getting G oauth2 token response
+@app.route('/gconnect', methods=['POST'])
+def gconnect():
+	# verify that the user is the one making the request
+	if request.args.get('state') != login_session['state']:
+		response = make_response(json.dumps('Invalid state token'), 401)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+	# collect the one-time code from our server
+	code = request.data
+	# upgrade the one-time code to a credentials object by exchanging it
+	try:
+		# will contain access token from our server
+		oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+		oauth_flow.redirect_uri = 'postmessage'
+		credentials = oauth_flow.step2_exchange(code)   # initiate exchange
+	# handle errors along the flow exchange
+	except:
+		response = make_response(json.dumps('Failed to upgrade authorization code.'), 401)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+	# if we got here, we have the credentials obj - check for valid access token
+	access_token = credentials.access_token
+	# let G verify if it's a valid token for use
+	url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s' % access_token)
+	h = httplib2.Http()
+	result = json.loads(h.request(url, 'GET')[1])
+
+	# we do not have a working access token - send 500 error to client
+	if result.get('error') is not None:
+		response = make_response(json.dumps(result.get('error')), 500)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+
+	# we do not have the right access token (matching g id) - 401 error to client
+	gplus_id = credentials.id_token['sub']
+	if result['user_id'] != gplus_id:
+		response = make_response(json.dumps('Token\'s user ID doesn\'t match given user ID.'), 401)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+
+	# we do not have matching client id's - 401 error to client
+	if result['issued_to'] != CLIENT_ID:
+		response = make_response(json.dumps('Token\'s client ID does not match app\'s.'), 401)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+
+	# check if user is already logged in
+	stored_credentials = login_session.get ('credentials')
+	stored_gplus_id = login_session.get ('gplus_id')
+	if stored_credentials is not None and gplus_id == stored_gplus_id:
+		# return success without resetting login vars again
+		response = make_response(json.dumps('Current user is already connected.'), 200)
+		response.headers['Content-Type'] = 'application/json'
+
+	# login was valid - store the access token for later
+	login_session['credentials'] = credentials
+	login_session['gplus_id'] = gplus_id
+
+	# get more info about the user
+	userinfo_url = 'https://www.googleapis.com/oauth2/v1/userinfo'
+	params = {'access_token': credentials.access_token, 'alt': 'json'}
+	# request the info allowed by my token's scope
+	answer = requests.get(userinfo_url, params = params)
+	data = json.loads(answer.text)  	# store the info
+
+	# store the specific data our app is interested in
+	login_session['username'] = data['name']
+	login_session['picture'] = data['picture']
+	login_session['email'] = data['email']
+
+	# simple response that shows we were able to use user info
+	o = '<h1>Welcome, %s!</h1>' % login_session['username']
+	o += '<img src = "%s"' % login_session['picture']
+	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
+	flash('You are now logged in as %s' % login_session['username'])
+	return o
