@@ -31,7 +31,7 @@ function signinCallback (authRes) {
 			type: 'POST',
 			// remember to define gconnect route on our server
 			// send state var to use our check against x-site ref forgery
-			url: '/gconnect?state={{STATE}}',
+			url: '/gconnect?state={{state}}',
 			// tell jQuery not to process the result into str
 			processData: false,
 			// octet-stream is arbitrary binary stream of data
@@ -44,14 +44,14 @@ function signinCallback (authRes) {
 					$('#result').html('Login successful!<br>'+res+'<br>Redirecting...');
 					setTimeout (function() {
 						window.location.href = '/';
-					}, 3000);
+					}, 5000);
+				} else if (authRes['error']) {
+					console.log ('G signin error: ' + authRes['error']);
+				} else {
+					$('#result').html('Failed to make a server-side call. Please check your configuration and console.');
 				}
 			}
 		});
-	} else if (authRes['error']) {
-		console.log ('G signin error: ' + authRes['error']);
-	} else {
-		$('#result').html('Failed to make a server-side call. Please check your configuration and console.');
 	}
 }
 </script>

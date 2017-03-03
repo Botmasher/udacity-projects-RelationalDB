@@ -387,8 +387,7 @@ def repopulateRelations():
 def showLogin():
 	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
 	login_session['state'] = state
-	print ("Current session state: %s" % login_session['state'])
-	return render_template('login.php')
+	return render_template('login.php', state=login_session['state'])
 
 
 # server-side route for getting G oauth2 token response
