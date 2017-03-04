@@ -5,8 +5,8 @@ import math
 # basic framework render, req handling, endpoints and messaging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-# /!\ read up on json and requests - used here to handle API
-import json, requests
+# /!\ read up on json and requests (imported below) - used here to handle API
+import json
 
 # get my WTForms classes from forms.py
 from forms import LoginForm, RestaurantForm, MenuItemForm
@@ -27,9 +27,6 @@ from flask import make_response
 # Apache 2 licensed http lib similar to urllib but with improvements
 import requests
 
-# load JSON file downloaded from console.developers.google.com
-CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
-
 # sql functionality
 from sqlalchemy import create_engine, func, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
@@ -40,6 +37,9 @@ engine = create_engine ('sqlite:///foodbase/models.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+# load JSON file downloaded from console.developers.google.com
+CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
 # target market with null initial value
 user_city = None
@@ -403,11 +403,13 @@ def gconnect():
 	# upgrade the one-time code to a credentials object by exchanging it
 	try:
 		# will contain access token from our server
+		print ('in try')
 		oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
 		oauth_flow.redirect_uri = 'postmessage'
 		credentials = oauth_flow.step2_exchange(code)   # initiate exchange
 	# handle errors along the flow exchange
 	except:
+		print ('in except')
 		response = make_response(json.dumps('Failed to upgrade authorization code.'), 401)
 		response.headers['Content-Type'] = 'application/json'
 		return response
@@ -438,12 +440,13 @@ def gconnect():
 		return response
 
 	# check if user is already logged in
-	stored_credentials = login_session.get ('credentials')
-	stored_gplus_id = login_session.get ('gplus_id')
+	stored_credentials = login_session.get('credentials')
+	stored_gplus_id = login_session.get('gplus_id')
 	if stored_credentials is not None and gplus_id == stored_gplus_id:
 		# return success without resetting login vars again
 		response = make_response(json.dumps('Current user is already connected.'), 200)
 		response.headers['Content-Type'] = 'application/json'
+		return response
 
 	# login was valid - store the access token for later
 	login_session['credentials'] = credentials

@@ -1,4 +1,4 @@
-# sqlalchemy stuff
+# sqlalchemy imports
 from sqlalchemy import create_engine, func, distinct
 from sqlalchemy.orm import sessionmaker
 

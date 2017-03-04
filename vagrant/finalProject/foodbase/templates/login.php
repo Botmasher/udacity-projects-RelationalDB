@@ -39,16 +39,13 @@ function signinCallback (authRes) {
 			data: authRes['code'],
 			// 200 code response - log user into app
 			success: function(res) {
+				console.log ("Made it to AJAX success!");
 				if (res) {
 					// populate above empty div with response
 					$('#result').html('Login successful!<br>'+res+'<br>Redirecting...');
 					setTimeout (function() {
 						window.location.href = '/';
 					}, 5000);
-				} else if (authRes['error']) {
-					console.log ('G signin error: ' + authRes['error']);
-				} else {
-					$('#result').html('Failed to make a server-side call. Please check your configuration and console.');
 				}
 			}
 		});
