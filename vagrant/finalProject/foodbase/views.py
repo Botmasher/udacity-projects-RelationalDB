@@ -403,8 +403,8 @@ def gconnect():
 	# upgrade the one-time code to a credentials object by exchanging it
 	try:
 		# will contain access token from our server
-		print ('in try')
 		oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+		print ('in try - just loaded flow_from_clientsecrets')
 		oauth_flow.redirect_uri = 'postmessage'
 		credentials = oauth_flow.step2_exchange(code)   # initiate exchange
 	# handle errors along the flow exchange
@@ -462,11 +462,16 @@ def gconnect():
 	# store the specific data our app is interested in
 	login_session['username'] = data['name']
 	login_session['picture'] = data['picture']
-	login_session['email'] = data['email']
+	#login_session['email'] = data['email']
+
+	print ("answer (requests.get() return) is %s" % answer)
+	print ("data (loaded json answer.text) is %s" % data)
+	print ("login_session (our flask session dict) is %s" % login_session)
+	print ("login credentials at %s" % login_session['credentials'])
 
 	# simple response that shows we were able to use user info
-	o = '<h1>Welcome, %s!</h1>' % login_session['username']
-	o += '<img src = "%s"' % login_session['picture']
-	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
-	flash('You are now logged in as %s' % login_session['username'])
+	o = '<h1>Welcome, %s!</h1>'%'you'# % login_session['username']
+#	o += '<img src = "%s"' % login_session['picture']
+#	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
+#	flash('You are now logged in as %s' % login_session['username'])
 	return o
