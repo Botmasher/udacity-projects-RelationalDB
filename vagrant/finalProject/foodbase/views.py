@@ -449,7 +449,7 @@ def gconnect():
 		return response
 
 	# login was valid - store the access token for later
-	login_session['credentials'] = credentials
+	login_session['credentials'] = credentials.access_token
 	login_session['gplus_id'] = gplus_id
 
 	# get more info about the user
@@ -462,6 +462,7 @@ def gconnect():
 	# store the specific data our app is interested in
 	login_session['username'] = data['name']
 	login_session['picture'] = data['picture']
+	# /!\ 500 ERROR - may need different scope to access email /!\
 	#login_session['email'] = data['email']
 
 	print ("answer (requests.get() return) is %s" % answer)
@@ -470,8 +471,8 @@ def gconnect():
 	print ("login credentials at %s" % login_session['credentials'])
 
 	# simple response that shows we were able to use user info
-	o = '<h1>Welcome, %s!</h1>'%'you'# % login_session['username']
-#	o += '<img src = "%s"' % login_session['picture']
-#	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
-#	flash('You are now logged in as %s' % login_session['username'])
+	o = '<h1>Welcome, %s!</h1>' % login_session['username']
+	o += '<img src = "%s"' % login_session['picture']
+	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
+	flash('You are now logged in as %s' % login_session['username'])
 	return o

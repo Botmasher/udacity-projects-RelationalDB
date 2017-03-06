@@ -39,17 +39,21 @@ function signinCallback (authRes) {
 			data: authRes['code'],
 			// 200 code response - log user into app
 			success: function(res) {
-				console.log ("Made it to AJAX success!");
+				console.log ("/login AJAX success!");
 				if (res) {
 					// populate above empty div with response
 					$('#result').html('Login successful!<br>'+res+'<br>Redirecting...');
 					setTimeout (function() {
 						window.location.href = '/';
-					}, 5000);
+					}, 3500);
 				}
 			}
 		});
-	}
+	} else if (authResult['error']) {
+    	console.log('Encountered this error: ' + authResult['error']);
+  	} else {
+  		$('#result').html('Failed to make server-side call. Check configuration and console.');
+    }
 }
 </script>
 </body>
