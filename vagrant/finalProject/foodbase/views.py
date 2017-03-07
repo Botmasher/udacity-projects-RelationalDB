@@ -465,14 +465,43 @@ def gconnect():
 	# /!\ 500 ERROR - may need different scope to access email /!\
 	#login_session['email'] = data['email']
 
-	print ("answer (requests.get() return) is %s" % answer)
-	print ("data (loaded json answer.text) is %s" % data)
-	print ("login_session (our flask session dict) is %s" % login_session)
-	print ("login credentials at %s" % login_session['credentials'])
-
 	# simple response that shows we were able to use user info
 	o = '<h1>Welcome, %s!</h1>' % login_session['username']
 	o += '<img src = "%s"' % login_session['picture']
 	o += ' style = "width: 200px; height: 200px; border-radius: 50px; -webkit-border-radius: 50px; -moz-border-radius: 50px;">'
 	flash('You are now logged in as %s' % login_session['username'])
 	return o
+
+@app.route('/gdisconnect')
+def gdisconnect():
+	access_token = login_session.get('credentials')
+	print (access_token)
+	# we don't have record of a user that we can disconnect
+	if access_token is None:
+		response = make_response(json.dumps('Current user isn\'t connected.'), 401)
+		response.headers['Content-Type'] = 'application/json; charset=utf-8'
+		return response
+	# pass access token to G url for revoking tokens
+	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
+	# hit url and store response in a results object
+	h = httplib2.Http()
+	result = h.request(url, 'GET')[0]
+	print (result)
+
+	# successful response
+	if result['status'] == 200:
+		# reset our app login_session data
+		del login_session['credentials']
+		del login_session['gplus_id']
+		del login_session['username']
+		#del login_session['email']
+		del login_session['picture']
+		# pass client successful disconnect
+		response = make_response(json.dumps('User successfully disconnected.'), 200)
+		response.headers['Content-Type'] = 'application/json; charset=utf-8'
+	# invalid token or somehow revoke not successful
+	else:
+		response = make_response(json.dumps('Failed to revoke token and disconnect user.'), 400)
+		response.headers['Content-Type'] = 'application/json; charset=utf-8'
+	
+	return response
