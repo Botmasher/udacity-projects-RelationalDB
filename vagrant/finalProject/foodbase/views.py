@@ -404,12 +404,10 @@ def gconnect():
 	try:
 		# will contain access token from our server
 		oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
-		print ('in try - just loaded flow_from_clientsecrets')
 		oauth_flow.redirect_uri = 'postmessage'
 		credentials = oauth_flow.step2_exchange(code)   # initiate exchange
 	# handle errors along the flow exchange
 	except:
-		print ('in except')
 		response = make_response(json.dumps('Failed to upgrade authorization code.'), 401)
 		response.headers['Content-Type'] = 'application/json'
 		return response
@@ -472,10 +470,10 @@ def gconnect():
 	flash('You are now logged in as %s' % login_session['username'])
 	return o
 
+
 @app.route('/gdisconnect')
 def gdisconnect():
 	access_token = login_session.get('credentials')
-	print (access_token)
 	# we don't have record of a user that we can disconnect
 	if access_token is None:
 		response = make_response(json.dumps('Current user isn\'t connected.'), 401)
@@ -486,13 +484,9 @@ def gdisconnect():
 	# hit url and store response in a results object
 	h = httplib2.Http()
 	result = h.request(url, 'GET')[0]
-	print (h.request(url, 'GET'))
-	print (result['status'])
-	print (result.get('status'))
 
 	# successful response
-	if result.get('status') == 200:
-		print ('got 200 status from request - will disconnect')
+	if result['status'] == '200':
 		# reset our app login_session data
 		del login_session['credentials']
 		del login_session['gplus_id']
@@ -502,10 +496,9 @@ def gdisconnect():
 		# pass client successful disconnect
 		response = make_response(json.dumps('User successfully disconnected.'), 200)
 		response.headers['Content-Type'] = 'application/json; charset=utf-8'
+		return response
 	# invalid token or somehow revoke not successful
 	else:
-		print ('did not get 200 status from request - no disconnect')
 		response = make_response(json.dumps('Failed to revoke token and disconnect.'), 400)
 		response.headers['Content-Type'] = 'application/json; charset=utf-8'
-	
-	return response
+		return response
