@@ -186,6 +186,9 @@ def restaurants (index=None, page=1, per_pg=4):
 
 @app.route('/add/<table>/', methods=['GET','POST'])
 def add(table):
+	if 'username' not in login_session:
+		return redirect('/login')
+
 	# get form template from WTForm class for this table
 	form = RestaurantForm (request.form)
 	if table == 'Restaurant':
@@ -215,6 +218,9 @@ def add(table):
 
 @app.route('/update/<table>/<int:index>/', methods=['GET','POST'])
 def update(table,index):
+	if 'username' not in login_session:
+		return redirect('/login')
+
 	# retrieve form class from forms.py based on URL keyword
 	if table == 'Restaurant':
 		form = RestaurantForm (request.form)
@@ -283,6 +289,9 @@ def update(table,index):
 
 @app.route('/delete/<table>/<int:index>/', methods=['GET','POST'])
 def delete(table,index):
+	if 'username' not in login_session:
+		return redirect('/login')
+
 	# retrieve form class from forms.py based on URL
 	# delete a restaurant
 	if table == 'Restaurant':
