@@ -40,6 +40,9 @@ class Restaurant (Base):
 	website = Column(String(250), nullable = True)
 	image = Column(String(250), nullable = True)
 	children = relationship('MenuItem')
+	# store relationship with user table
+	user_id = Column(Integer, ForeignKey('user.id'))
+	user = relationship(User)
 
 	# serialize JSON data for API
 	@property
@@ -68,6 +71,9 @@ class MenuItem (Base):
 	# store relationship with key table
 	restaurant_id = Column(Integer, ForeignKey('restaurant.id'))
 	restaurant = relationship(Restaurant)
+	# store relationship with user table
+	user_id = Column(Integer, ForeignKey('user.id'))
+	user = relationship(User)
 
 	# serialize JSON data for API
 	@property
@@ -77,6 +83,22 @@ class MenuItem (Base):
 			'name': self.name,
 			'description': self.description,
 			'restaurant': self.restaurant
+		}
+
+# User class added for oauth2 / local permissions
+class User (Base):
+	__tablename__ = 'user'
+	id = Column(Integer, primary_key = True)
+	name = Column(String(250), nullable = False)
+	picture = Column(String(800), nullable = False)
+	email = Column(String(800), nullable = True)
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'name': self.name,
+			'picture': self.picture,
+			'email': self.email
 		}
 
 ## CONFIG end of file ##
