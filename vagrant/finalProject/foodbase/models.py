@@ -24,6 +24,24 @@ Base = declarative_base()
 # set to True for models_reset() - wipe db
 reset = False
 
+# User class added for oauth2 / local permissions
+class User (Base):
+	__tablename__ = 'user'
+	id = Column(Integer, primary_key = True)
+	name = Column(String(250), nullable = False)
+	picture = Column(String(800))
+	email = Column(String(800), nullable = True)
+	city = Column(String(100), nullable = True)
+	@property
+	def serialize(self):
+		return {
+			'id': self.id,
+			'name': self.name,
+			'picture': self.picture,
+			'email': self.email,
+			'city': self.city
+		}
+
 # CLASS represent restaurants table, extending base class
 class Restaurant (Base):
 	# TABLE setup
@@ -56,7 +74,8 @@ class Restaurant (Base):
 			'state': self.state,
 			'website': self.website,
 			'cuisine': self.cuisine,
-			'image': self.image
+			'image': self.image,
+			'user': self.user
 		}
 
 # CLASS represent menu items table, extending base class	
@@ -82,28 +101,14 @@ class MenuItem (Base):
 			'id': self.id,
 			'name': self.name,
 			'description': self.description,
-			'restaurant': self.restaurant
-		}
-
-# User class added for oauth2 / local permissions
-class User (Base):
-	__tablename__ = 'user'
-	id = Column(Integer, primary_key = True)
-	name = Column(String(250), nullable = False)
-	picture = Column(String(800), nullable = False)
-	email = Column(String(800), nullable = True)
-	@property
-	def serialize(self):
-		return {
-			'id': self.id,
-			'name': self.name,
-			'picture': self.picture,
-			'email': self.email
+			'restaurant': self.restaurant,
+			'user': self.user
 		}
 
 ## CONFIG end of file ##
 # point to db - here create a sqlite file to sim db #
-engine = create_engine('sqlite:///foodbase/models.db')
+#engine = create_engine('sqlite:///foodbase/models.db')
+engine = create_engine('sqlite:///modelswithusers.db')
 
 # go into db, add classes created as new tables in db #
 Base.metadata.create_all(engine)

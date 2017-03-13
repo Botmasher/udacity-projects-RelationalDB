@@ -33,7 +33,9 @@ from sqlalchemy.orm import sessionmaker
 
 # set up connection for db
 from models import Base, Restaurant, MenuItem
-engine = create_engine ('sqlite:///foodbase/models.db')
+#engine = create_engine ('sqlite:///foodbase/models.db')
+# use new users db
+engine = create_engine ('sqlite:///foodbase/modelswithusers.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
