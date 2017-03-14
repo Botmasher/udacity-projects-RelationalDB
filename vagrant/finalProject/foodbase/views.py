@@ -32,7 +32,7 @@ from sqlalchemy import create_engine, func, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
 
 # set up connection for db
-from models import Base, Restaurant, MenuItem
+from models import Base, Restaurant, MenuItem, User
 #engine = create_engine ('sqlite:///foodbase/models.db')
 # use new users db
 engine = create_engine ('sqlite:///foodbase/modelswithusers.db')
@@ -203,10 +203,10 @@ def add(table):
 	# POST add restaurant to database
 	if request.method == 'POST' and form.validate():
 		if table == 'Restaurant':
-			new_row = Restaurant (name=form.name.data, address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+			new_row = Restaurant (name=form.name.data, user_id=login_session['user_id'], address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
 			flash ('New restaurant created!')
 		elif table == 'MenuItem':
-			new_row = MenuItem (name=form.name.data, description=form.description.data, restaurant_id=form.restaurant_id.data)
+			new_row = MenuItem (name=form.name.data, user_id=login_session['user_id'], description=form.description.data, restaurant_id=form.restaurant_id.data)
 			flash ('New menu item created!')
 		else:
 			flash ('Please try to add a /Restaurant/ or a /MenuItem/.')
@@ -513,3 +513,21 @@ def gdisconnect():
 		response = make_response(json.dumps('Failed to revoke token and disconnect.'), 400)
 		response.headers['Content-Type'] = 'application/json; charset=utf-8'
 		return response
+
+
+# methods for handling User model once we get a user through OAuth
+def createUser(login_session):
+	newUser = User(name=login_session['username'],picture=login_session['picture'])
+	session.add(newUser)
+	session.commit()
+	user = session.query(User).filter_by(email=login_session['email']).one
+	return user.id
+def getUserInfo (user_id):
+	user = session.query(User).filter_by(id=user_id).one()
+	return user
+def getUserID (email):
+	try:
+		user = session.query(User).filter_by(email=email).one()
+		return user.id
+	except:
+		return None
