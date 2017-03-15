@@ -516,18 +516,25 @@ def gdisconnect():
 
 
 # methods for handling User model once we get a user through OAuth
-def createUser(login_session):
-	newUser = User(name=login_session['username'],picture=login_session['picture'])
+def createUser(login_session, auth_provider):
+	if auth_provider == 'gplus':
+		auth_id= login_session['gplus_id']
+	else:
+		# no recognized oauth provider given - unique user not created
+		return None
+	newUser = User(name=login_session['username'], auth_id=auth_id, auth_site=auth_provider, picture=login_session['picture'])
 	session.add(newUser)
 	session.commit()
-	user = session.query(User).filter_by(email=login_session['email']).one
+	user = session.query(User).filter_by(auth_id=auth_id, auth_site=auth_provider).one()
 	return user.id
+
 def getUserInfo (user_id):
 	user = session.query(User).filter_by(id=user_id).one()
 	return user
-def getUserID (email):
+
+def getUserID (auth_id, auth_provider):
 	try:
-		user = session.query(User).filter_by(email=email).one()
+		user = session.query(User).filter_by(auth_id=auth_id, auth_site=auth_provider).one()
 		return user.id
 	except:
 		return None
