@@ -474,6 +474,10 @@ def gconnect():
 	# /!\ 500 ERROR - may need different scope to access email /!\
 	#login_session['email'] = data['email']
 
+	#
+
+	# add user id to the login_session for further db queries
+
 	# simple response that shows we were able to use user info
 	o = '<h1>Welcome, %s!</h1>' % login_session['username']
 	o += '<img src = "%s"' % login_session['picture']
@@ -516,16 +520,20 @@ def gdisconnect():
 
 
 # methods for handling User model once we get a user through OAuth
-def createUser(login_session, auth_provider):
-	if auth_provider == 'gplus':
-		auth_id= login_session['gplus_id']
+def createUser(login_session):
+	# create user and store auth info
+	if login_session['gplus_id'] != None:
+		newUser = User(name=login_session['username'], gplus_id=login_session['gplus_id'], picture=login_session['picture'])
 	else:
 		# no recognized oauth provider given - unique user not created
 		return None
-	newUser = User(name=login_session['username'], auth_id=auth_id, auth_site=auth_provider, picture=login_session['picture'])
 	session.add(newUser)
 	session.commit()
-	user = session.query(User).filter_by(auth_id=auth_id, auth_site=auth_provider).one()
+	# retrieve the created user from db
+	if login_session['gplus_id'] != None:
+		user = session.query(User).filter_by(gplus_id=login_session['gplus_id']).one()
+	else:
+		pass
 	return user.id
 
 def getUserInfo (user_id):
