@@ -474,9 +474,13 @@ def gconnect():
 	# /!\ 500 ERROR - may need different scope to access email /!\
 	#login_session['email'] = data['email']
 
-	#
+	# check if user exists, if not add to db
+	user_id = getUserID(login_session['gplus_id'], login_session['fb_id'])
+	if user_id == None:
+		user_id = createUser(login_session)
 
 	# add user id to the login_session for further db queries
+	login_session['user_id'] = user_id
 
 	# simple response that shows we were able to use user info
 	o = '<h1>Welcome, %s!</h1>' % login_session['username']
@@ -533,9 +537,9 @@ def getUserInfo (user_id):
 	user = session.query(User).filter_by(id=user_id).one()
 	return user
 
-def getUserID (auth_id, auth_provider):
+def getUserID (gplus_id, fb_id):
 	try:
-		user = session.query(User).filter_by(auth_id=auth_id, auth_site=auth_provider).one()
+		user = session.query(User).filter_by(gplus_id=gplus_id, fb_id=fb_id).one()
 		return user.id
 	except:
 		return None
