@@ -475,10 +475,9 @@ def gconnect():
 	#login_session['email'] = data['email']
 
 	# check if user exists, if not add to db
-	user_id = getUserID(login_session['gplus_id'], login_session['fb_id'])
-	if user_id == None:
+	user_id = getUserID(login_session['gplus_id'], 'gplus')
+	if not user_id:
 		user_id = createUser(login_session)
-
 	# add user id to the login_session for further db queries
 	login_session['user_id'] = user_id
 
@@ -524,22 +523,29 @@ def gdisconnect():
 
 
 # methods for handling User model once we get a user through OAuth
-def createUser(login_session):
+def createUser(user_session, oauth_site):
 	# create user and store auth info
-	newUser = User(name=login_session['username'], fb_id=login_session['fb_id'], gplus_id=login_session['gplus_id'], picture=login_session['picture'])
+	if oauth_site == 'fb':
+		oauth_id = user_session['fb_id']
+	elif oauth_site == 'gplus':
+		oauth_id = user_session['gplus_id']
+	else:
+		# oauth provider not recognized
+		return None
+	newUser = User(name=user_session['username'], auth_id=oauth_id, auth_site=oauth_site, picture=user_session['picture'])	
 	session.add(newUser)
 	session.commit()
 	# retrieve the created user from db
-	user = session.query(User).filter_by(gplus_id=login_session['gplus_id'], fb_id=login_session['fb_id']).one()
+	user = session.query(User).filter_by(auth_id=oauth_id, auth_site=oauth_site).one()
 	return user.id
 
 def getUserInfo (user_id):
 	user = session.query(User).filter_by(id=user_id).one()
 	return user
 
-def getUserID (gplus_id, fb_id):
+def getUserID (oauth_id, oauth_site):
 	try:
-		user = session.query(User).filter_by(gplus_id=gplus_id, fb_id=fb_id).one()
+		user = session.query(User).filter_by(auth_id=oauth_id, auth_site=oauth_site).one()
 		return user.id
 	except:
 		return None
