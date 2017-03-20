@@ -89,9 +89,14 @@ def restaurants (index=None, page=1, per_pg=4):
 		o += '<p>%s - main menu</p>'%r.name
 		o += '<ul>'
 		for i in m:
-			o += '<li>%s<br>%s<br><a href="%s">edit</a> <a href="%s">delete</a></li>'%(i.name,i.description,url_for('update',table='MenuItem',index=i.id),url_for('delete',table='MenuItem',index=i.id)) 
+			o += '<li>%s<br>%s' % (i.name, i.description)
+			# edit and delete options if this belongs to user
+			if 'username' in login_session and login_session['user_id']==m.user_id:
+				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></li>' % (url_for('update',table='MenuItem',index=i.id), url_for('delete',table='MenuItem',index=i.id)) 
 		o += '</ul>'
-		o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
+		# add item option if this belongs to user
+		if 'username' in login_session and login_session['user_id']==m.user_id:
+			o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
 	
 	# browse all restaurants
 	else:
@@ -112,10 +117,10 @@ def restaurants (index=None, page=1, per_pg=4):
 			count += 1
 			# count through and remember results based on pagination variables
 			if count >= ((per_pg * page)-per_pg + 1) and count <= (per_pg*page):
-				results_store[r.id] = [r.name, r.image]
+				results_store[r.id] = [r.name, r.image, r.user_id]
 			# display all restaurants without calculating pagination
 			elif per_pg == 0 and page == 0:
-				results_store[r.id] = [r.name, r.image]
+				results_store[r.id] = [r.name, r.image, r.user_id]
 			# do not remember this restaurant (complement to first branch)
 			else:
 				pass
@@ -128,12 +133,11 @@ def restaurants (index=None, page=1, per_pg=4):
 			grid += '<a href="%s"><h3>%s</h3><img src="%s" alt="%s"></a>'	\
 				 	% (url_for('restaurants', index=r_id), results_store[r_id][0][:16]+'...', results_store[r_id][1], results_store[r_id][0])
 			grid += '<br>'
-			# display and format update and delete links
-			grid += '<a href="%s">edit</a> &nbsp;&nbsp; ' 	\
-				 	% (url_for('update', table='Restaurant', index=r_id))
-			grid += '<a href="%s">delete</a>' 				\
-					% (url_for('delete', table='Restaurant', index=r_id))
-			grid += '</div>'	# end single image (class "oneimg")
+			# display and format update and delete links if this belongs to user
+			if 'username' in login_session and login_session['user_id']==results_store[r_id][2]:
+				grid += '<a href="%s">edit</a> &nbsp;&nbsp; ' % (url_for('update', table='Restaurant', index=r_id))
+				grid += '<a href="%s">delete</a>' % (url_for('delete', table='Restaurant', index=r_id))
+			grid += '</div>'	# end single image class "oneimg"
 
 		#
 		# Build row of links to all paginated results
@@ -206,8 +210,14 @@ def add(table):
 			new_row = Restaurant (name=form.name.data, user_id=login_session['user_id'], address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
 			flash ('New restaurant created!')
 		elif table == 'MenuItem':
-			new_row = MenuItem (name=form.name.data, user_id=login_session['user_id'], description=form.description.data, restaurant_id=form.restaurant_id.data)
-			flash ('New menu item created!')
+			# make sure logged in user owns the restaurant for this menu item
+			check_restaurant = session.query(Restaurant).filter_by(id=form.restaurant_id.data).one()
+			if login_session['user_id'] == check_restaurant.user_id:
+				new_row = MenuItem (name=form.name.data, user_id=login_session['user_id'], description=form.description.data, restaurant_id=form.restaurant_id.data)
+				flash ('New menu item created!')
+			else:
+				flash ('No permission to add to that restaurant menu.')
+				return render_template ('form.php', market=user_city, form=form, content='')
 		else:
 			flash ('Please try to add a /Restaurant/ or a /MenuItem/.')
 		session.add (new_row)
@@ -225,8 +235,12 @@ def update(table,index):
 
 	# retrieve form class from forms.py based on URL keyword
 	if table == 'Restaurant':
+		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().user_id:
+			return '<script>function alertPermiss() {alert("Not authorized to update. Create a restaurant in order to update it.");}</script><body onload="alertPermiss=()">'
 		form = RestaurantForm (request.form)
 	elif table == 'MenuItem':
+		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().user_id:
+			return '<script>function alertPermiss() {alert("Not authorized to update. Create a menu item in order to update it.");}</script><body onload="alertPermiss=()">'
 		form = MenuItemForm (request.form)
 	else:
 		flash ('This isn\'t the /update/ you are looking for! We don\'t recognize that URL.')
@@ -297,10 +311,14 @@ def delete(table,index):
 	# retrieve form class from forms.py based on URL
 	# delete a restaurant
 	if table == 'Restaurant':
+		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().user_id:
+			return '<script>function alertPermiss() {alert("Not authorized to delete. Create a restaurant in order to delete it.");}</script><body onload="alertPermiss=()">'
 		mod_row = session.query(Restaurant).filter_by(id=index)[0]
 		flash ('Restaurant deleted!')
 	# delete a menu item
 	elif table == 'MenuItem':
+		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().user_id:
+			return '<script>function alertPermiss() {alert("Not authorized to delete. Create a menu item in order to delete it.");}</script><body onload="alertPermiss=()">'
 		mod_row = session.query(MenuItem).filter_by(id=index)[0]
 		flash ('Menu item deleted!')
 	else:
