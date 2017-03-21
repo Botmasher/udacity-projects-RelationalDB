@@ -3,8 +3,8 @@ from sqlalchemy import create_engine, func, distinct
 from sqlalchemy.orm import sessionmaker
 
 # setup connection for db
-from models import Base, Restaurant, MenuItem
-engine = create_engine ('sqlite:///foodbase/models.db')
+from models import Base, Restaurant, MenuItem, User
+engine = create_engine ('sqlite:///foodbase/modelswithusers.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()

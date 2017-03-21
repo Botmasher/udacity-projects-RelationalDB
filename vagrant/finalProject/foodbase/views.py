@@ -91,11 +91,11 @@ def restaurants (index=None, page=1, per_pg=4):
 		for i in m:
 			o += '<li>%s<br>%s' % (i.name, i.description)
 			# edit and delete options if this belongs to user
-			if 'username' in login_session and login_session['user_id']==m.user_id:
+			if 'username' in login_session and login_session['user_id']==m.userId:
 				o += '<br><a href="%s">edit</a> <a href="%s">delete</a></li>' % (url_for('update',table='MenuItem',index=i.id), url_for('delete',table='MenuItem',index=i.id)) 
 		o += '</ul>'
 		# add item option if this belongs to user
-		if 'username' in login_session and login_session['user_id']==m.user_id:
+		if 'username' in login_session and login_session['user_id']==m.userId:
 			o += '<p><a href="%s">+ new item</a></p>' % (url_for('add',table='MenuItem'))
 	
 	# browse all restaurants
@@ -117,10 +117,10 @@ def restaurants (index=None, page=1, per_pg=4):
 			count += 1
 			# count through and remember results based on pagination variables
 			if count >= ((per_pg * page)-per_pg + 1) and count <= (per_pg*page):
-				results_store[r.id] = [r.name, r.image, r.user_id]
+				results_store[r.id] = [r.name, r.image, r.userId]
 			# display all restaurants without calculating pagination
 			elif per_pg == 0 and page == 0:
-				results_store[r.id] = [r.name, r.image, r.user_id]
+				results_store[r.id] = [r.name, r.image, r.userId]
 			# do not remember this restaurant (complement to first branch)
 			else:
 				pass
@@ -134,7 +134,7 @@ def restaurants (index=None, page=1, per_pg=4):
 				 	% (url_for('restaurants', index=r_id), results_store[r_id][0][:16]+'...', results_store[r_id][1], results_store[r_id][0])
 			grid += '<br>'
 			# display and format update and delete links if this belongs to user
-			if 'username' in login_session and login_session['user_id']==results_store[r_id][2]:
+			if 'username' in login_session and results_store[r_id][2] != None and login_session['user_id']==results_store[r_id][2]:
 				grid += '<a href="%s">edit</a> &nbsp;&nbsp; ' % (url_for('update', table='Restaurant', index=r_id))
 				grid += '<a href="%s">delete</a>' % (url_for('delete', table='Restaurant', index=r_id))
 			grid += '</div>'	# end single image class "oneimg"
@@ -185,7 +185,8 @@ def restaurants (index=None, page=1, per_pg=4):
 		o += pagination
 
 		# /!\ CAUTION allow adding a restaurant to the db
-		o += '<br><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
+		if 'username' in login_session:
+			o += '<br><p><a href="%s">+ new restaurant</a></p>'%url_for('add', table='Restaurant')
 
 	return render_template('main.php',market=user_city, content=o)
 
@@ -207,13 +208,13 @@ def add(table):
 	# POST add restaurant to database
 	if request.method == 'POST' and form.validate():
 		if table == 'Restaurant':
-			new_row = Restaurant (name=form.name.data, user_id=login_session['user_id'], address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
+			new_row = Restaurant (name=form.name.data, userId=login_session['user_id'], address=form.address.data, city=form.city.data, state=form.state.data, zipCode=form.zipCode.data, website=form.website.data, cuisine=form.cuisine.data)
 			flash ('New restaurant created!')
 		elif table == 'MenuItem':
 			# make sure logged in user owns the restaurant for this menu item
 			check_restaurant = session.query(Restaurant).filter_by(id=form.restaurant_id.data).one()
-			if login_session['user_id'] == check_restaurant.user_id:
-				new_row = MenuItem (name=form.name.data, user_id=login_session['user_id'], description=form.description.data, restaurant_id=form.restaurant_id.data)
+			if login_session['user_id'] == check_restaurant.userId:
+				new_row = MenuItem (name=form.name.data, userId=login_session['user_id'], description=form.description.data, restaurant_id=form.restaurant_id.data)
 				flash ('New menu item created!')
 			else:
 				flash ('No permission to add to that restaurant menu.')
@@ -235,11 +236,11 @@ def update(table,index):
 
 	# retrieve form class from forms.py based on URL keyword
 	if table == 'Restaurant':
-		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().user_id:
+		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().userId:
 			return '<script>function alertPermiss() {alert("Not authorized to update. Create a restaurant in order to update it.");}</script><body onload="alertPermiss=()">'
 		form = RestaurantForm (request.form)
 	elif table == 'MenuItem':
-		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().user_id:
+		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().userId:
 			return '<script>function alertPermiss() {alert("Not authorized to update. Create a menu item in order to update it.");}</script><body onload="alertPermiss=()">'
 		form = MenuItemForm (request.form)
 	else:
@@ -311,13 +312,13 @@ def delete(table,index):
 	# retrieve form class from forms.py based on URL
 	# delete a restaurant
 	if table == 'Restaurant':
-		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().user_id:
+		if login_session['user_id'] != session.query(Restaurant).filter_by(id=index).one().userId:
 			return '<script>function alertPermiss() {alert("Not authorized to delete. Create a restaurant in order to delete it.");}</script><body onload="alertPermiss=()">'
 		mod_row = session.query(Restaurant).filter_by(id=index)[0]
 		flash ('Restaurant deleted!')
 	# delete a menu item
 	elif table == 'MenuItem':
-		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().user_id:
+		if login_session['user_id'] != session.query(MenuItem).filter_by(id=index).one().userId:
 			return '<script>function alertPermiss() {alert("Not authorized to delete. Create a menu item in order to delete it.");}</script><body onload="alertPermiss=()">'
 		mod_row = session.query(MenuItem).filter_by(id=index)[0]
 		flash ('Menu item deleted!')
@@ -550,11 +551,11 @@ def createUser(user_session, oauth_site):
 	else:
 		# oauth provider not recognized
 		return None
-	newUser = User(name=user_session['username'], auth_id=oauth_id, auth_site=oauth_site, picture=user_session['picture'])	
+	newUser = User(name=user_session['username'], authId=oauth_id, authSite=oauth_site, picture=user_session['picture'])	
 	session.add(newUser)
 	session.commit()
 	# retrieve the created user from db
-	user = session.query(User).filter_by(auth_id=oauth_id, auth_site=oauth_site).one()
+	user = session.query(User).filter_by(authId=oauth_id, authSite=oauth_site).one()
 	return user.id
 
 def getUserInfo (user_id):
@@ -563,7 +564,7 @@ def getUserInfo (user_id):
 
 def getUserID (oauth_id, oauth_site):
 	try:
-		user = session.query(User).filter_by(auth_id=oauth_id, auth_site=oauth_site).one()
+		user = session.query(User).filter_by(authId=oauth_id, authSite=oauth_site).one()
 		return user.id
 	except:
 		return None

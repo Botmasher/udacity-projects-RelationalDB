@@ -29,8 +29,8 @@ class User (Base):
 	__tablename__ = 'user'
 	id = Column(Integer, primary_key = True)
 	name = Column(String(250), nullable = False)
-	auth_id = Column(String(800, nullable = False)
-	auth_site = Column(String(80), nullable = False)
+	authId = Column(String(800), nullable = False)
+	authSite = Column(String(80), nullable = False)
 	picture = Column(String(800), nullable = True)
 	email = Column(String(800), nullable = True)
 	city = Column(String(100), nullable = True)
@@ -39,8 +39,8 @@ class User (Base):
 		return {
 			'id': self.id,
 			'name': self.name,
-			'auth_id': self.auth_id,
-			'auth_site': self.auth_site,
+			'authId': self.authId,
+			'authSite': self.authSite,
 			'picture': self.picture,
 			'email': self.email,
 			'city': self.city
@@ -63,7 +63,7 @@ class Restaurant (Base):
 	image = Column(String(250), nullable = True)
 	children = relationship('MenuItem')
 	# store relationship with user table
-	user_id = Column(Integer, ForeignKey('user.id'))
+	userId = Column(Integer, ForeignKey('user.id'))
 	user = relationship(User)
 
 	# serialize JSON data for API
@@ -95,7 +95,7 @@ class MenuItem (Base):
 	restaurant_id = Column(Integer, ForeignKey('restaurant.id'))
 	restaurant = relationship(Restaurant)
 	# store relationship with user table
-	user_id = Column(Integer, ForeignKey('user.id'))
+	userId = Column(Integer, ForeignKey('user.id'))
 	user = relationship(User)
 
 	# serialize JSON data for API
